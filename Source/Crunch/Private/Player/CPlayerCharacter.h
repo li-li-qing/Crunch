@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Character/CCharacter.h"
 #include "InputActionValue.h"
+#include "GAS/CGameplayAbilityTypes.h"
 #include "CPlayerCharacter.generated.h"
 
 
@@ -55,9 +56,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Move;
 
+	// 能力的输入行为
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TMap<ECAbilityInputID,TObjectPtr<UInputAction>> GameplayAbilityInputActions;
+	
+	void HandleAbilityInput(const FInputActionValue& InputActionValue,ECAbilityInputID InputID);
+	
 	// 移动视角
 	void HandleLookInput(const FInputActionValue& InputActionValue);
-
 	// 移动
 	void HandleMoveInput(const FInputActionValue& InputActionValue);
 

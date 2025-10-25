@@ -15,7 +15,6 @@ class UCAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
-
 	/**
 	 * @brief 动画初始化原生重写点
 	 *
@@ -24,50 +23,91 @@ public:
 	 * @note 此函数在动画蓝图实例化后立即调用，仅执行一次
 	 * @warning 不要在此处执行耗时操作，会影响游戏启动性能
 	 */
-	 virtual void NativeInitializeAnimation() override;
-	 /**
-	  * @brief 动画更新原生重写点
-	  *
-	  * @param DeltaSeconds 自上一帧以来的时间（秒）
-	  *
-	  * @details 每帧调用，主要用于收集动画数据
-	  * @note 建议在此仅收集数据，复杂计算应在NativeThreadSafeUpdateAnimation中进行
-	  * @warning 在主游戏线程执行，避免耗时操作
-	  */
-	 virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	 /**
-	  * @brief 线程安全的动画更新原生重写点
-	  *
-	  * @param DeltaSeconds 自上一帧以来的时间（秒）
-	  *
-	  * @details 在工作线程上执行，仅当关联的动画节点相关时调用
-	  * @note 适合执行复杂动画计算，不会阻塞游戏线程
-	  * @warning 不能访问非线程安全的UObject操作
-	  */
-	 virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativeInitializeAnimation() override;
+	/**
+	 * @brief 动画更新原生重写点
+	 *
+	 * @param DeltaSeconds 自上一帧以来的时间（秒）
+	 *
+	 * @details 每帧调用，主要用于收集动画数据
+	 * @note 建议在此仅收集数据，复杂计算应在NativeThreadSafeUpdateAnimation中进行
+	 * @warning 在主游戏线程执行，避免耗时操作
+	 */
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	/**
+	 * @brief 线程安全的动画更新原生重写点
+	 *
+	 * @param DeltaSeconds 自上一帧以来的时间（秒）
+	 *
+	 * @details 在工作线程上执行，仅当关联的动画节点相关时调用
+	 * @note 适合执行复杂动画计算，不会阻塞游戏线程
+	 * @warning 不能访问非线程安全的UObject操作
+	 */
+	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
-	 /**
-	  * @brief 获取玩家速度
-	  *
-	  * @return 玩家速度
-	  */
-	 UFUNCTION(BlueprintCallable, Category = "Animation",meta=(BlueprintThreadSafe))
-	 FORCEINLINE float GetSpeed() const { return Speed; }
+	/**
+	 * @brief 获取玩家速度
+	 *
+	 * @return 玩家速度
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetSpeed() const { return Speed; }
 
-	 /**
-	  * @brief 是否在移动状态
-	  * @return 玩家是否在移动
-	  */
-	 UFUNCTION(BlueprintCallable, Category = "Animation",meta=(BlueprintThreadSafe))
-	 FORCEINLINE bool IsMoving() const { return Speed != 0.f; }
+	/**
+	 * @brief 是否在移动状态
+	 * @return 玩家是否在移动
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE bool IsMoving() const { return Speed != 0.f; }
 
-	  /**
-	  * @brief 是否在静止状态
-	  * @return 玩家是否在静止
-	  */
-	 UFUNCTION(BlueprintCallable, Category = "Animation",meta=(BlueprintThreadSafe))
-	 FORCEINLINE bool IsNotMoving() const { return Speed == 0.f; }
+	/**
+	* @brief 是否在静止状态
+	* @return 玩家是否在静止
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE bool IsNotMoving() const { return Speed == 0.f; }
 
+	/**
+	 * @brief 获得 Yaw 的速度
+	 * @return 获得 Yaw 的速度
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetYawSpeed() const { return YawSpeed; };
+
+	/**
+	 * @brief 获得 平滑的Yaw 的速度
+	 * @return 获得 平滑的Yaw 的速度
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetSmoothedYawSpeed() const { return SmoothedYawSpeed; };
+
+	/**
+	* @brief 获得是否在跳跃状态
+	* @return 获得 是否在跳跃
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE bool GetIsJumping() const { return bIsJumping; };
+
+	/**
+	 * @brief 获得是否地面状态
+	 * @return 返回 !bIsJumping
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE bool GetIsOnGround() const { return !bIsJumping; };
+
+	/**
+	 * @brief 获得Yaw的偏移量
+	 * @return 
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetLookYawOffset() const{return LookRotationOffSet.Yaw;}
+
+	/**
+	 * @brief 获得Pitch的偏移量
+	 * @return 
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetLookPitchOffset() const{return LookRotationOffSet.Pitch;}
 private:
 	// 获取玩家角色
 	UPROPERTY()
@@ -79,4 +119,23 @@ private:
 
 	// 玩家的移动速度
 	float Speed;
+
+	// 倾斜的速度
+	float YawSpeed;
+	// 平滑倾斜的速度
+	float SmoothedYawSpeed;
+
+	// 是否跳跃
+	bool bIsJumping;
+
+
+	// 倾斜速度平滑线性插值速度
+	UPROPERTY(EditAnywhere, Category="Animation")
+	float YawSpeedSmoothLerpSpeed = 1.f;
+
+	// 上一帧身体的倾斜角度
+	FRotator BodyPreviousRotation;
+
+	// 角色的视角看向的偏移量
+	FRotator LookRotationOffSet;
 };

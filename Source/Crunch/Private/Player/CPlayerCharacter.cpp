@@ -2,12 +2,15 @@
 
 
 #include "Player/CPlayerCharacter.h"
+
+#include "AbilitySystemComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+
 ACPlayerCharacter::ACPlayerCharacter()
 {
 	// 初始化弹簧臂
@@ -26,7 +29,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	bUseControllerRotationYaw = false;
 	// 朝向移动的方向转动
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f,720.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
 }
 
 void ACPlayerCharacter::PawnClientRestart()
@@ -39,7 +42,8 @@ void ACPlayerCharacter::PawnClientRestart()
 	if (OwningPlayerController)
 	{
 		// 获得增强输入子系统
-		UEnhancedInputLocalPlayerSubsystem* InputSubsystem = OwningPlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+		UEnhancedInputLocalPlayerSubsystem* InputSubsystem = OwningPlayerController->GetLocalPlayer()->GetSubsystem<
+			UEnhancedInputLocalPlayerSubsystem>();
 		if (InputSubsystem && IM_GameplayInputMappingContext)
 		{
 			// 移除映射上下文
@@ -47,9 +51,7 @@ void ACPlayerCharacter::PawnClientRestart()
 			// 添加映射上下文，优先级为0
 			InputSubsystem->AddMappingContext(IM_GameplayInputMappingContext, 0);
 		}
-
 	}
-
 }
 
 void ACPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -64,10 +66,31 @@ void ACPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Completed, this, &ACPlayerCharacter::StopJumping);
 
 		// 绑定视角移动输入
-		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ACPlayerCharacter::HandleLookInput);
+		EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this,
+		                                   &ACPlayerCharacter::HandleLookInput);
 
 		// 绑定移动输入
-		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ACPlayerCharacter::HandleMoveInput);
+		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this,
+		                                   &ACPlayerCharacter::HandleMoveInput);
+
+		for (const TPair<ECAbilityInputID, UInputAction*>& InputActionPair : GameplayAbilityInputActions)
+		{
+			EnhancedInputComponent->BindAction(InputActionPair.Value, ETriggerEvent::Triggered, this,
+			                                   &ACPlayerCharacter::HandleAbilityInput, InputActionPair.Key);
+		}
+	}
+}
+
+void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionValue, ECAbilityInputID InputID)
+{
+	bool bPressed = InputActionValue.Get<bool>();
+	if (bPressed)
+	{
+		GetAbilitySystemComponent()->AbilityLocalInputPressed((int32)InputID);
+	}
+	else
+	{
+		GetAbilitySystemComponent()->AbilityLocalInputReleased((int32)InputID);
 	}
 }
 
@@ -87,17 +110,16 @@ void ACPlayerCharacter::HandleMoveInput(const FInputActionValue& InputActionValu
 
 	// 移动
 	AddMovementInput(GetMoveForwardDirection() * InputVal.Y + GetLookRightDirection() * InputVal.X);
-
 }
 
 FVector ACPlayerCharacter::GetLookRightDirection() const
 {
-	return CameraComp->GetRightVector();	// 获得摄像机右边的方向
+	return CameraComp->GetRightVector(); // 获得摄像机右边的方向
 }
 
 FVector ACPlayerCharacter::GetLookForwardDirection() const
 {
-	return CameraComp->GetForwardVector();	// 获得摄像机前面的方向
+	return CameraComp->GetForwardVector(); // 获得摄像机前面的方向
 }
 
 FVector ACPlayerCharacter::GetMoveForwardDirection() const
