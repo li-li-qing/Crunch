@@ -42,10 +42,12 @@ private:
 	UPROPERTY(VisibleDefaultsOnly,Category = "View")
 	TObjectPtr<UCameraComponent> CameraComp;
 
+	/********************************************************/
+	/*					输入行为	  							*/
+	/********************************************************/
 	// 增强输入映射上下文
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> IM_GameplayInputMappingContext;
-
 	// 增加 跳跃 的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Jump;
@@ -55,11 +57,15 @@ private:
 	// 增加 移动 的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Move;
-
 	// 能力的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TMap<ECAbilityInputID,TObjectPtr<UInputAction>> GameplayAbilityInputActions;
-	
+
+	/**
+	 * @brief 处理技能输入事件（按下/释放）
+	 * @param InputActionValue 输入动作的值
+	 * @param InputID 技能输入标识符
+	 */
 	void HandleAbilityInput(const FInputActionValue& InputActionValue,ECAbilityInputID InputID);
 	
 	// 移动视角
@@ -71,4 +77,11 @@ private:
 	FVector GetLookRightDirection()const;
 	FVector GetLookForwardDirection()const;
 	FVector GetMoveForwardDirection()const;
+
+	/********************************************************/
+	/*				死亡和重生		  						*/
+	/********************************************************/
+	virtual void OnDeath() override;
+	virtual void OnRespawn() override;
+	
 };

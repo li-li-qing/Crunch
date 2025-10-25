@@ -20,4 +20,11 @@ public:
 	 * @return 
 	 */
 	static FGameplayTag GetBasicAttackAbilityTag();
+
+	/**
+	 * @brief 获得死亡状态标签
+	 * @return 
+	 */
+	static FGameplayTag GetDeadStatTag();
+	
 };

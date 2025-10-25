@@ -83,13 +83,17 @@ void ACPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionValue, ECAbilityInputID InputID)
 {
+	// 获取输入状态（按下=true，释放=false）
 	bool bPressed = InputActionValue.Get<bool>();
+	// 如果输入是按下状态
 	if (bPressed)
 	{
+		// 通知AbilitySystemComponent：某个输入ID被按下
 		GetAbilitySystemComponent()->AbilityLocalInputPressed((int32)InputID);
 	}
 	else
 	{
+		// 通知AbilitySystemComponent：某个输入ID被释放
 		GetAbilitySystemComponent()->AbilityLocalInputReleased((int32)InputID);
 	}
 }
@@ -126,4 +130,22 @@ FVector ACPlayerCharacter::GetMoveForwardDirection() const
 {
 	// 计算两个向量的叉积  输入两个3D向量，输出一个新的向量，这个新向量同时垂直于原来的两个向量。
 	return FVector::CrossProduct(GetLookRightDirection(), FVector::UpVector);
+}
+
+void ACPlayerCharacter::OnDeath()
+{
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (PlayerController)
+	{
+		DisableInput(PlayerController);
+	}
+}
+
+void ACPlayerCharacter::OnRespawn()
+{
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (PlayerController)
+	{
+		EnableInput(PlayerController);
+	}
 }

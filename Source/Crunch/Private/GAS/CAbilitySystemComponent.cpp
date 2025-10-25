@@ -2,6 +2,12 @@
 
 
 #include "GAS/CAbilitySystemComponent.h"
+#include "GAS/CAttributeSet.h"
+UCAbilitySystemComponent::UCAbilitySystemComponent()
+{
+	// 绑定血量变更事件
+	GetGameplayAttributeValueChangeDelegate(UCAttributeSet::GetHealthAttribute()).AddUObject(this,&UCAbilitySystemComponent::HealthUpdated);
+}
 
 void UCAbilitySystemComponent::ApplyInitialEffects()
 {
@@ -56,3 +62,19 @@ void UCAbilitySystemComponent::GiveInitialAbilities()
 	}
 	
 }
+
+void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& ChangeData)
+{
+	if (!GetOwner()) return;
+
+	// 检查死亡条件：血量<=0、服务端权限、死亡效果存在
+	if (ChangeData.NewValue <=0 && GetOwner()->HasAuthority() && DeathEffect)
+	{
+		// 创建死亡效果实例
+		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingSpec(DeathEffect,1,MakeEffectContext());
+		// 应用效果到自身
+		ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+	}
+}
+
+

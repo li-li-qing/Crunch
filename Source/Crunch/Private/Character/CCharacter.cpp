@@ -8,6 +8,9 @@
 #include "GAS/CAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widgets/OverHeadStatsGauge.h"
+#include "GAS/CAbilitySystemStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ACCharacter::ACCharacter()
 {
@@ -20,6 +23,7 @@ ACCharacter::ACCharacter()
 	// 创建玩家头顶的血条跟蓝条组件,然后附加到根组件上
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidgetComponent"));
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
+	BindGASChangeDelegates();
 }
 
 void ACCharacter::PossessedBy(AController* NewController)
@@ -58,6 +62,28 @@ void ACCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ConfigureOverHeadStatusWidget();
+}
+
+void ACCharacter::BindGASChangeDelegates()
+{
+	if (CAbilitySystemComponent)
+	{
+		// 尝试获取到这个死亡状态,如果获取到了,进行回调函数
+		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(this,&ACCharacter::DeathTagUpdated);
+	}
+}
+
+void ACCharacter::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount != 0)
+	{
+		
+		StartDeathSequence();
+	}
+	else
+	{
+		Respawn();
+	}
 }
 
 void ACCharacter::Tick(float DeltaTime)
@@ -115,4 +141,54 @@ void ACCharacter::UpdateHeadGaugeVisibility()
 		// 设置头顶Widget的可见性：
 		OverHeadWidgetComponent->SetHiddenInGame(DistSquared > HeadStatGaugeVisibilityRangeSquared);
 	}
+}
+
+void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
+{
+	GetWorldTimerManager().ClearTimer(HeadStatGaugeVisibilityUpdateTimerHandle);
+	if (bIsEnabled)
+	{
+		// 启用头顶的血条
+		ConfigureOverHeadStatusWidget();
+	}
+	else
+	{
+		// 关闭头顶的血条
+		OverHeadWidgetComponent->SetHiddenInGame(true);
+	}
+}
+
+void ACCharacter::PlayDeathAnimation()
+{
+	if (DeathMontage)
+	{
+		PlayAnimMontage(DeathMontage);
+	}
+	
+}
+
+void ACCharacter::StartDeathSequence()
+{
+	OnDeath();
+	// 播放死亡动画
+	PlayDeathAnimation();
+	// 把头上的血条隐藏
+	SetStatusGaugeEnabled(false);
+	// 禁用角色的移动
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	// 禁用胶囊的碰撞
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ACCharacter::Respawn()
+{
+	OnRespawn();
+}
+
+void ACCharacter::OnDeath()
+{
+}
+
+void ACCharacter::OnRespawn()
+{
 }
