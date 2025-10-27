@@ -21,7 +21,6 @@ void UGA_Combo::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
                                 const FGameplayAbilityActivationInfo ActivationInfo,
                                 const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	// 尝试提交技能（检查资源消耗、冷却时间等条件）
 	if (!K2_CommitAbility()) //蓝图兼容的CommitAbility封装
 	{
@@ -58,7 +57,6 @@ void UGA_Combo::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 		// 激活Task，开始监听事件
 		WaitGameplayEventTask->ReadyForActivation();
 	}
-
 	if (K2_HasAuthority())
 	{
 		// 等待游戏事件
@@ -93,11 +91,11 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData Data)
 {
 	// 提取事件标签
 	FGameplayTag EventTag = Data.EventTag;
-	// 情况1：收到重置信号
-	if (EventTag == GetCombaChangedEventTag())
+	// 情况1：收到结束信号
+	if (EventTag == GetCombaChangedEventEndTag())
 	{
 		NextComboName = NAME_None; // 清除下一段连招
-		//UE_LOG(LogTemp,Warning,TEXT("Next Combo is cleared"));
+		UE_LOG(LogTemp,Warning,TEXT("Next Combo is cleared"));
 		return;
 	}
 	//解析标签层级（如"Ability.Combo.Change.Combo01" -> ["Ability","Combo","Change","Combo01"]）
@@ -105,8 +103,8 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData Data)
 	UGameplayTagsManager::Get().SplitGameplayTagFName(EventTag, TagNames);
 	// 取最后一级作为下一连招名称（如"Combo01"）
 	NextComboName = TagNames.Last();
-
-	//UE_LOG(LogTemp,Warning,TEXT("Next combo is now : %s"),*NextComboName.ToString());
+ 
+	UE_LOG(LogTemp,Warning,TEXT("Next combo is now : %s"),*NextComboName.ToString());
 }
 
 void UGA_Combo::SetupWaitComboInputPress()
@@ -127,9 +125,11 @@ void UGA_Combo::HandleInputPress(float TimeWaited)
 
 void UGA_Combo::DoDamage(FGameplayEventData Data)
 {
+
 	// 从TargetData中获取球体扫描的命中结果
 	TArray<FHitResult> HitResults = GetHitResultFromSweepLocationTargetData(
-		Data.TargetData, TargetSweepSphereRadius, false, true);
+		Data.TargetData, TargetSweepSphereRadius);
+	
 	// 遍历所有命中的目标
 	for (const FHitResult& HitResult : HitResults)
 	{
@@ -138,7 +138,7 @@ void UGA_Combo::DoDamage(FGameplayEventData Data)
 		// 创建GameplayEffectSpec（效果规格）
 		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(
 			GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
-
+		
 		// 创建并配置GameplayEffect的上下文（Context）
 		FGameplayEffectContextHandle EffectContext = MakeEffectContext(GetCurrentAbilitySpecHandle(),
 		                                                               GetCurrentActorInfo());
@@ -153,22 +153,22 @@ void UGA_Combo::DoDamage(FGameplayEventData Data)
 		                                UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(
 			                                HitResult.GetActor()));
 	}
+	
 }
 
 void UGA_Combo::TryCommitCombo()
 {
-	if (NextComboName == NAME_None)
-	{
-		return;
-	}
+	if (NextComboName == NAME_None)return;
+
 	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
-	if (!OwnerAnimInstance)
-	{
-		return;
-	}
+	if (!OwnerAnimInstance)return;
+
 	// 动态修改蒙太奇当前段→下一段
-	OwnerAnimInstance->Montage_SetNextSection(OwnerAnimInstance->Montage_GetCurrentSection(ComboMontage), NextComboName,
-	                                          ComboMontage);
+	OwnerAnimInstance->Montage_SetNextSection(OwnerAnimInstance->Montage_GetCurrentSection(
+		ComboMontage),
+		NextComboName,
+		ComboMontage
+		);
 }
 
 TSubclassOf<UGameplayEffect> UGA_Combo::GetDamageEffectForCurrentCombo() const
@@ -193,5 +193,5 @@ TSubclassOf<UGameplayEffect> UGA_Combo::GetDamageEffectForCurrentCombo() const
 			return *FoundEffectPtr;
 		}
 	}
-	return nullptr;
+	return DefaultDamageEffect;
 }

@@ -63,6 +63,11 @@ void UCAbilitySystemComponent::GiveInitialAbilities()
 	
 }
 
+void UCAbilitySystemComponent::ApplyFullStatEffect()
+{
+	AuthApplyGameplayEffect(FullStatEffect);
+}
+
 void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& ChangeData)
 {
 	if (!GetOwner()) return;
@@ -70,11 +75,20 @@ void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& Chang
 	// 检查死亡条件：血量<=0、服务端权限、死亡效果存在
 	if (ChangeData.NewValue <=0 && GetOwner()->HasAuthority() && DeathEffect)
 	{
-		// 创建死亡效果实例
-		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingSpec(DeathEffect,1,MakeEffectContext());
-		// 应用效果到自身
+		AuthApplyGameplayEffect(DeathEffect);
+	}
+}
+
+void UCAbilitySystemComponent::AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level)
+{
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		// 创建效果句柄
+		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingSpec(GameplayEffect,Level,MakeEffectContext());
+		// 把这个效果传给自己
 		ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 	}
+	
 }
 
 

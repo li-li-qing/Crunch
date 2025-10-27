@@ -6,6 +6,7 @@
 #include "Character/CCharacter.h"
 #include "InputActionValue.h"
 #include "GAS/CGameplayAbilityTypes.h"
+
 #include "CPlayerCharacter.generated.h"
 
 
@@ -25,12 +26,13 @@ class ACPlayerCharacter : public ACCharacter
 public:
 	// 构造函数
 	ACPlayerCharacter();
-
 	// 当客户端重新启动时调用
 	virtual void PawnClientRestart()override;
 	// 设置玩家输入组件
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)override;
-protected:
+
+
+	
 
 
 private:
@@ -83,5 +85,7 @@ private:
 	/********************************************************/
 	virtual void OnDeath() override;
 	virtual void OnRespawn() override;
+
+	
 	
 };

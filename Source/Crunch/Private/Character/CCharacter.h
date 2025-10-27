@@ -6,14 +6,16 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "CCharacter.generated.h"
 
 
 class UCAttributeSet;
 class UCAbilitySystemComponent;
 class UWidgetComponent;
+
 UCLASS()
-class ACCharacter : public ACharacter, public IAbilitySystemInterface
+class ACCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -41,13 +43,28 @@ public:
 	 * @return 
 	 */
 	bool IsLocallyControlledByPlayer() const;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/********************************************************/
+	/*						队伍ID  							*/
+	/********************************************************/
+public:
+	/** Assigns Team Agent to given TeamID */
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+
+	/** Retrieve team identifier in form of FGenericTeamId */
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+private:
+	UPROPERTY(Replicated)
+	FGenericTeamId TeamId;
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
-
 	// 能力组件
-	UPROPERTY(VisibleDefaultsOnly,Category = "Gameplay Ability")
+	UPROPERTY(VisibleDefaultsOnly, Category = "Gameplay Ability")
 	TObjectPtr<UCAbilitySystemComponent> CAbilitySystemComponent;
 
 	// 角色的属性
@@ -62,14 +79,14 @@ private:
 	 */
 	void ConfigureOverHeadStatusWidget();
 	// 玩家头顶的血条跟蓝条
-	UPROPERTY(VisibleDefaultsOnly,Category = "UI")
+	UPROPERTY(VisibleDefaultsOnly, Category = "UI")
 	UWidgetComponent* OverHeadWidgetComponent;
 	// 多长时间检测一次
-	UPROPERTY(EditDefaultsOnly,Category = "UI")
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	float HeadStatGaugeVisibilityCheckUpdateGap{1};
 	// 可见的范围
-	UPROPERTY(EditDefaultsOnly,Category = "UI")
-	float HeadStatGaugeVisibilityRangeSquared {10000000.f};
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	float HeadStatGaugeVisibilityRangeSquared{10000000.f};
 	// 定时器,用于检测玩家超出距离隐藏头顶的血条
 	FTimerHandle HeadStatGaugeVisibilityUpdateTimerHandle;
 	/**
@@ -94,12 +111,22 @@ private:
 	 * @param Tag 
 	 * @param NewCount 
 	 */
-	void DeathTagUpdated(const FGameplayTag Tag,int32 NewCount);
-	UPROPERTY(EditDefaultsOnly,Category = "Death")
+	void DeathTagUpdated(const FGameplayTag Tag, int32 NewCount);
+	UPROPERTY(EditDefaultsOnly, Category = "Death")
+	float DeathMontageFinishTimeShift = -0.8f;
+	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	UAnimMontage* DeathMontage;
+	FTransform MeshRelativeTransform;
+	FTimerHandle DeathMontageTimerHandle;
+	// 当死亡蒙太奇播放完成的时候调用
+	void DeathMontageFinished();
 	// 播放死亡蒙太奇
 	void PlayDeathAnimation();
-	
+	/**
+	 * @brief 开启布娃娃状态
+	 * @param bIsEnabled 
+	 */
+	void SetRagdollEnabled(bool bIsEnabled);
 	void StartDeathSequence();
 	void Respawn();
 	virtual void OnDeath();

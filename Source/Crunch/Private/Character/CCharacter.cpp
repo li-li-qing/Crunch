@@ -2,6 +2,8 @@
 
 
 #include "Character/CCharacter.h"
+
+#include "MovieSceneTracksComponentTypes.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GAS/CAbilitySystemComponent.h"
@@ -11,7 +13,7 @@
 #include "GAS/CAbilitySystemStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-
+#include "Net/UnrealNetwork.h"
 ACCharacter::ACCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,6 +25,7 @@ ACCharacter::ACCharacter()
 	// 创建玩家头顶的血条跟蓝条组件,然后附加到根组件上
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidgetComponent"));
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
+
 	BindGASChangeDelegates();
 }
 
@@ -57,11 +60,30 @@ bool ACCharacter::IsLocallyControlledByPlayer() const
 	return GetController() && GetController()->IsLocalPlayerController();
 }
 
+void ACCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACCharacter,TeamId);
+}
+
+void ACCharacter::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+{
+	TeamId = NewTeamID;
+}
+
+FGenericTeamId ACCharacter::GetGenericTeamId() const
+{
+	return TeamId;
+}
+
 void ACCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	ConfigureOverHeadStatusWidget();
+
+	// 获得变换信息
+	MeshRelativeTransform = GetMesh()->GetRelativeTransform();
 }
 
 void ACCharacter::BindGASChangeDelegates()
@@ -69,7 +91,8 @@ void ACCharacter::BindGASChangeDelegates()
 	if (CAbilitySystemComponent)
 	{
 		// 尝试获取到这个死亡状态,如果获取到了,进行回调函数
-		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(this,&ACCharacter::DeathTagUpdated);
+		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(
+			this, &ACCharacter::DeathTagUpdated);
 	}
 }
 
@@ -77,7 +100,6 @@ void ACCharacter::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
 {
 	if (NewCount != 0)
 	{
-		
 		StartDeathSequence();
 	}
 	else
@@ -142,7 +164,6 @@ void ACCharacter::UpdateHeadGaugeVisibility()
 		OverHeadWidgetComponent->SetHiddenInGame(DistSquared > HeadStatGaugeVisibilityRangeSquared);
 	}
 }
-
 void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
 {
 	GetWorldTimerManager().ClearTimer(HeadStatGaugeVisibilityUpdateTimerHandle);
@@ -158,13 +179,43 @@ void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
 	}
 }
 
+void ACCharacter::DeathMontageFinished()
+{
+	SetRagdollEnabled(true);
+}
+
 void ACCharacter::PlayDeathAnimation()
 {
 	if (DeathMontage)
 	{
-		PlayAnimMontage(DeathMontage);
+		// 播放死亡动画蒙太奇并获取动画时长
+		float MontageDuration = PlayAnimMontage(DeathMontage);
+		GetWorldTimerManager().SetTimer(DeathMontageTimerHandle, this,&ACCharacter::DeathMontageFinished,MontageDuration+DeathMontageFinishTimeShift);
 	}
-	
+}
+
+void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
+{
+	if (bIsEnabled)
+	{
+		//  将骨骼网格体从父组件分离（保持当前世界变换）
+		GetMesh()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		// 开启物理模拟
+		GetMesh()->SetSimulatePhysics(true);
+		// 设置碰撞模式为仅物理交互
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	}
+	else
+	{
+		// 关闭物理模拟
+		GetMesh()->SetSimulatePhysics(false);
+		// 禁用所有碰撞
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// 将骨骼网格体重新附加到根组件
+		GetMesh()->AttachToComponent(GetRootComponent(),FAttachmentTransformRules::KeepRelativeTransform);
+		// 恢复骨骼网格体的初始相对变换
+		GetMesh()->SetRelativeTransform(MeshRelativeTransform);
+	}
 }
 
 void ACCharacter::StartDeathSequence()
@@ -182,7 +233,35 @@ void ACCharacter::StartDeathSequence()
 
 void ACCharacter::Respawn()
 {
+	// 触发复活事件
 	OnRespawn();
+	// 禁用布娃娃模拟
+	SetRagdollEnabled(false);
+	// 重新启用胶囊体碰撞
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	// 重置移动模式为移动
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	// 停止所有正在播放的动画蒙太奇
+	GetMesh()->GetAnimInstance()->StopAllMontages(0.f);
+	// 重新启用状态条（血条等UI）
+	SetStatusGaugeEnabled(true);
+
+	if (HasAuthority() && GetController())
+	{
+		// 获取到玩家的出生点
+		TWeakObjectPtr<AActor> StartSpot = GetController()->StartSpot;
+		// 如果出生点有效,复活的时候再出生点复活
+		if (StartSpot.IsValid())
+		{
+			SetActorTransform(StartSpot->GetActorTransform());
+		}
+	}
+	
+	if (CAbilitySystemComponent)
+	{
+		// 应用所有的效果
+		CAbilitySystemComponent->ApplyFullStatEffect();
+	}
 }
 
 void ACCharacter::OnDeath()

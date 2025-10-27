@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "Abilities/GameplayAbility.h"
 #include "CGameplayAbility.generated.h"
 class UAnimInstance;
@@ -26,6 +27,7 @@ protected:
 	 * @return 返回所有命中的碰撞结果数组
 	 */
 	TArray<FHitResult> GetHitResultFromSweepLocationTargetData(const FGameplayAbilityTargetDataHandle& TargetDataHandle,
-	                                                           float SphereSweepRadius = 30.f, bool bDrawDebug = false,
+	                                                           float SphereSweepRadius = 30.f,ETeamAttitude::Type TargetTeam = ETeamAttitude::Hostile,
+	                                                           bool bDrawDebug = false,
 	                                                           bool bIgnoreSelf = true) const;
 };

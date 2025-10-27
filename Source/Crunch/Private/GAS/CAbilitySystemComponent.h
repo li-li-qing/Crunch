@@ -29,11 +29,21 @@ public:
 	 */
 	void GiveInitialAbilities();
 
+	/**
+	 * @brief 
+	 */
+	void ApplyFullStatEffect();
+
 private:
 	/**
 	 * @brief 血量更新的时候调用
 	 */
 	void HealthUpdated(const FOnAttributeChangeData& ChangeData);
+	
+	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect,int Level = 1);
+	// 全部的状态效果
+	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
+	TSubclassOf<UGameplayEffect> FullStatEffect;
 	// 存放死亡的效果
 	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
 	TSubclassOf<UGameplayEffect> DeathEffect;

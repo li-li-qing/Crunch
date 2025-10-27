@@ -16,11 +16,13 @@ UAnimInstance* UCGameplayAbility::GetOwnerAnimInstance() const
 }
 
 TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
-	const FGameplayAbilityTargetDataHandle& TargetDataHandle, float SphereSweepRadius, bool bDrawDebug,
-	bool bIgnoreSelf) const
+	const FGameplayAbilityTargetDataHandle& TargetDataHandle, float SphereSweepRadius, ETeamAttitude::Type TargetTeam,
+	bool bDrawDebug, bool bIgnoreSelf) const
 {
 	TArray<FHitResult> OutResults;
 	TSet<AActor*> HitActors;
+	// 从施法者身上获取团队接口
+	IGenericTeamAgentInterface* OwnerTeamAgentInterface = Cast<IGenericTeamAgentInterface>(GetAvatarActorFromActorInfo());
 	// 1. 遍历目标数据容器中的所有数据项
 	for (const TSharedPtr<FGameplayAbilityTargetData> TargetData : TargetDataHandle.Data)
 	{
@@ -64,10 +66,21 @@ TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
 			{
 				continue;
 			}
+			if (OwnerTeamAgentInterface)
+			{
+				// 获取当前角色对另一个Actor的团队态度	
+				ETeamAttitude::Type OtherActorTeamAttitude = OwnerTeamAgentInterface->GetTeamAttitudeTowards(*Result.GetActor());
+				if (OtherActorTeamAttitude != TargetTeam)
+				{
+					continue;
+				}
+			}
 			HitActors.Add(Result.GetActor());
 			OutResults.Add(Result);
 		}
+		
 	}
 	// 返回所有扫描结果
 	return OutResults;
 }
+

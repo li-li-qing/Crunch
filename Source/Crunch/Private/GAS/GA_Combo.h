@@ -79,7 +79,7 @@ private:
 	// 连招段伤害效果映射表
 	UPROPERTY(EditDefaultsOnly,Category="Gameplay Effect")
 	TMap<FName,TSubclassOf<UGameplayEffect>> DamageEffectMap;
-	// 
+	// 击打的范围大小
 	UPROPERTY(EditDefaultsOnly,Category="Targetting")
 	float TargetSweepSphereRadius = 30.f;
 	/**

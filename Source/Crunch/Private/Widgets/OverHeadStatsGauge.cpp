@@ -6,8 +6,10 @@
 #include "AbilitySystemComponent.h"
 #include "ValueGauge.h"
 #include "GAS/CAttributeSet.h"
+
 void UOverHeadStatsGauge::ConfigureWithASC(UAbilitySystemComponent* AbilitySystemComponent)
 {
+	
 	if (AbilitySystemComponent)
 	{
 		// 绑定血条到Health/MaxHealth属性
