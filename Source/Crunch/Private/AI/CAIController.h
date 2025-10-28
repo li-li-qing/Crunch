@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GameplayTagContainer.h"
 #include "CAIController.generated.h"
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
@@ -70,4 +71,18 @@ private:
 	 * @param ActorToForget 需要检查的目标Actor（通常是玩家或敌人）
 	 */
 	void ForgetActorIfDead(AActor* ActorToForget);
+
+	/**
+	 * @brief 清除AI所有感知记忆并禁用所有感知系统
+	 */
+	void ClearAndDisableAllSenses();
+	/**
+	 * @brief 启用所有的感知
+	 */
+	void EnabledALLSenses();
+
+	/**
+	 * @brief 响应角色死亡标签变化的回调函数
+	 */
+	void PawnDeadTagUpdated(const FGameplayTag Tag,int32 Count);
 };

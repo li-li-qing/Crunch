@@ -6,6 +6,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Character/CCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "GAS/CAbilitySystemStatics.h"
@@ -47,6 +48,13 @@ void ACAIController::OnPossess(APawn* Possessed)
 	{
 		// 将Pawn的队伍ID设置为与控制器的队伍ID一致
 		PawnTeamAgentInterface->SetGenericTeamId(GetGenericTeamId());
+	}
+	// 获得能力组件
+	UAbilitySystemComponent* PawnASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Possessed);
+	if (PawnASC)
+	{
+		// 注册一个游戏标签（GameplayTag）变化的监听事件，当指定的标签（"Dead"）被添加或移除时，自动触发对应的回调函数
+		PawnASC->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(this,&ACAIController::PawnDeadTagUpdated);
 	}
 }
 
@@ -120,6 +128,56 @@ void ACAIController::ForgetActorIfDead(AActor* ActorToForget)
 				Stimuli.SetStimulusAge(TNumericLimits<float>::Max());
 			}
 		}
+	}
+}
+
+void ACAIController::ClearAndDisableAllSenses()
+{
+	// 强制让AI感知系统立即“遗忘”所有已记录的目标 触发 OnTargetPerceptionForgotten事件
+	AIPerceptionComponent->AgeStimuli(TNumericLimits<float>::Max());
+
+	// 遍历并禁用所有已配置的感知类型（视觉/听觉等）
+	for (auto SenseConfigIt = AIPerceptionComponent->GetSensesConfigIterator(); SenseConfigIt;++SenseConfigIt)
+	{
+		//  // 获取感知配置（如UAISenseConfig_Sight）并禁用对应感知
+		AIPerceptionComponent->SetSenseEnabled((*SenseConfigIt)->GetSenseImplementation(),false);
+	}
+
+	// 清除黑板中的目标引用（防止行为树使用过期数据）
+	if (GetBlackboardComponent())
+	{
+		// 清除键值对
+		GetBlackboardComponent()->ClearValue(TargetBlackboardKeyName);
+	}
+	
+}
+
+void ACAIController::EnabledALLSenses()
+{
+	// 遍历并禁用所有已配置的感知类型（视觉/听觉等）
+	for (auto SenseConfigIt = AIPerceptionComponent->GetSensesConfigIterator(); SenseConfigIt;++SenseConfigIt)
+	{
+		//  // 获取感知配置（如UAISenseConfig_Sight）并禁用对应感知
+		AIPerceptionComponent->SetSenseEnabled((*SenseConfigIt)->GetSenseImplementation(),true);
+	}
+}
+
+void ACAIController::PawnDeadTagUpdated(const FGameplayTag Tag, int32 Count)
+{
+	// 检查标签计数（Count > 0 表示角色死亡）
+	if (Count != 0)
+	{
+		// 停止AI逻辑
+		GetBrainComponent()->StopLogic("Dead");
+		// 角色死亡时：清除感知记忆并禁用所有感知
+		ClearAndDisableAllSenses();
+	}
+	else
+	{
+		// 启动AI逻辑
+		GetBrainComponent()->StartLogic();
+		// 角色复活时：重新启用所有感知能力
+		EnabledALLSenses();
 	}
 }
 

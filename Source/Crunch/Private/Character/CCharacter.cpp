@@ -226,6 +226,11 @@ void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
 void ACCharacter::StartDeathSequence()
 {
 	OnDeath();
+	// 当死亡的时候,立即停下能力
+	if (CAbilitySystemComponent)
+	{
+		CAbilitySystemComponent->CancelAbilities();
+	}
 	// 播放死亡动画
 	PlayDeathAnimation();
 	// 把头上的血条隐藏
@@ -242,6 +247,7 @@ void ACCharacter::Respawn()
 {
 	// 触发复活事件
 	OnRespawn();
+
 	// 设置自身被AI察觉
 	SetAIPerceptionStimuliSourceEnabled(true);
 	// 禁用布娃娃模拟
