@@ -14,6 +14,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 ACCharacter::ACCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -26,6 +28,7 @@ ACCharacter::ACCharacter()
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidgetComponent"));
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
 
+	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSourceComponent"));
 	BindGASChangeDelegates();
 }
 
@@ -84,6 +87,8 @@ void ACCharacter::BeginPlay()
 
 	// 获得变换信息
 	MeshRelativeTransform = GetMesh()->GetRelativeTransform();
+	// 将当前Actor注册为AI视觉感知系统的有效检测目标  参数1:需要注册的感知类型
+	PerceptionStimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
 }
 
 void ACCharacter::BindGASChangeDelegates()
@@ -229,12 +234,16 @@ void ACCharacter::StartDeathSequence()
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	// 禁用胶囊的碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 设置自身不被AI察觉
+	SetAIPerceptionStimuliSourceEnabled(false);
 }
 
 void ACCharacter::Respawn()
 {
 	// 触发复活事件
 	OnRespawn();
+	// 设置自身被AI察觉
+	SetAIPerceptionStimuliSourceEnabled(true);
 	// 禁用布娃娃模拟
 	SetRagdollEnabled(false);
 	// 重新启用胶囊体碰撞
@@ -270,4 +279,20 @@ void ACCharacter::OnDeath()
 
 void ACCharacter::OnRespawn()
 {
+}
+
+void ACCharacter::SetAIPerceptionStimuliSourceEnabled(bool bIsEnabled)
+{
+	if (!PerceptionStimuliSourceComponent) return;
+
+	if (bIsEnabled)
+	{
+		// 将当前Actor注册为AI视觉感知系统的有效检测目标 
+		PerceptionStimuliSourceComponent->RegisterWithPerceptionSystem();
+	}
+	else
+	{
+		// 将当前Actor取消注册为AI视觉感知系统的有效检测目标 
+		PerceptionStimuliSourceComponent->UnregisterFromPerceptionSystem();
+	}
 }

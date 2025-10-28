@@ -10,6 +10,7 @@
 #include "CCharacter.generated.h"
 
 
+class UAIPerceptionStimuliSourceComponent;
 class UCAttributeSet;
 class UCAbilitySystemComponent;
 class UWidgetComponent;
@@ -131,4 +132,18 @@ private:
 	void Respawn();
 	virtual void OnDeath();
 	virtual void OnRespawn();
+
+	/********************************************************/
+	/*					AI	  								*/
+	/********************************************************/
+private:
+	/**
+	 * @brief 设置AI对自身是否是有效检测目标
+	 * @param bIsEnabled 
+	 */
+	void SetAIPerceptionStimuliSourceEnabled(bool bIsEnabled);
+	
+	// 用于标记哪些 Actor 能够被 AI 感知系统检测到
+	TObjectPtr<UAIPerceptionStimuliSourceComponent> PerceptionStimuliSourceComponent;
+	
 };
