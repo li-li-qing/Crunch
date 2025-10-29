@@ -79,6 +79,11 @@ FGenericTeamId ACCharacter::GetGenericTeamId() const
 	return TeamId;
 }
 
+void ACCharacter::OnRep_TeamId()
+{
+	// 由子类覆盖
+}
+
 void ACCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -184,9 +189,28 @@ void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
 	}
 }
 
+bool ACCharacter::IsDead() const
+{
+	return GetAbilitySystemComponent()->HasMatchingGameplayTag(UCAbilitySystemStatics::GetDeadStatTag());
+}
+
+void ACCharacter::RespawnImmediately()
+{
+	if (HasAuthority())
+	{
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(UCAbilitySystemStatics::GetDeadStatTag()));
+		
+	}
+}
+
 void ACCharacter::DeathMontageFinished()
 {
-	SetRagdollEnabled(true);
+	// 只有死亡了才开启布娃娃状态
+	if (IsDead())
+	{
+		SetRagdollEnabled(true);
+	}
+	
 }
 
 void ACCharacter::PlayDeathAnimation()

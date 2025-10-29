@@ -43,6 +43,15 @@ private:
 	// 进度条的颜色
 	UPROPERTY(EditAnywhere,Category="Visual")
 	FLinearColor BarColor;
+	// 字体大小
+	UPROPERTY(EditAnywhere,Category="Visual")
+	FSlateFontInfo ValueTextFont;
+	// 字体是否可见
+	UPROPERTY(EditAnywhere,Category="Visual")
+	bool bValueTextVisible = true;
+	// 进度条是否可见
+	UPROPERTY(EditAnywhere,Category="Visual")
+	bool bProgressBarVisible = true;
 	// 进度条
 	UPROPERTY(VisibleAnywhere,meta = (BindWidget))
 	TObjectPtr<UProgressBar> ProgressBar;

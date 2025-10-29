@@ -39,15 +39,18 @@ ACAIController::ACAIController()
 void ACAIController::OnPossess(APawn* Possessed)
 {
 	Super::OnPossess(Possessed);
-	// 为AI控制器设置队伍ID（0表示默认队伍）
-	SetGenericTeamId(FGenericTeamId(0));
+
 	// 检查被控制的Pawn是否实现了团队接口
 	IGenericTeamAgentInterface* PawnTeamAgentInterface = Cast<IGenericTeamAgentInterface>(Possessed);
 	// 如果Pawn支持团队接口，同步队伍ID
 	if (PawnTeamAgentInterface)
 	{
-		// 将Pawn的队伍ID设置为与控制器的队伍ID一致
-		PawnTeamAgentInterface->SetGenericTeamId(GetGenericTeamId());
+		// 设置队伍ID
+		SetGenericTeamId(PawnTeamAgentInterface->GetGenericTeamId());
+		// 清除感官系统
+		ClearAndDisableAllSenses();
+		// 启用感官系统
+		EnabledALLSenses();
 	}
 	// 获得能力组件
 	UAbilitySystemComponent* PawnASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Possessed);

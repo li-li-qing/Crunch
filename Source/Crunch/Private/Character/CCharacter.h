@@ -57,8 +57,11 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 private:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_TeamId)
 	FGenericTeamId TeamId;
+
+	UFUNCTION()
+	virtual void OnRep_TeamId() ;
 
 protected:
 	virtual void BeginPlay() override;
@@ -103,6 +106,18 @@ private:
 	/********************************************************/
 	/*						 死亡和重生 						*/
 	/********************************************************/
+public:
+	/**
+	 * @brief 是否死亡
+	 * @return true = 死亡 false = 没死
+	 */
+	bool IsDead() const;
+	/**
+	 * @brief 移除所有带有死亡标签的GameplayEffect
+	 */
+	void RespawnImmediately();
+private:
+	
 	/**
 	 * @brief 尝试获取到这个死亡状态,如果获取到了,进行回调函数
 	 */
