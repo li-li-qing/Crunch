@@ -10,6 +10,7 @@
 #include "CCharacter.generated.h"
 
 
+struct FGameplayEventData;
 class UAIPerceptionStimuliSourceComponent;
 class UCAttributeSet;
 class UCAbilitySystemComponent;
@@ -46,6 +47,9 @@ public:
 	bool IsLocallyControlledByPlayer() const;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UFUNCTION(Server,Reliable,WithValidation)
+	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag,const FGameplayEventData& EventData);
+	
 	/********************************************************/
 	/*						队伍ID  							*/
 	/********************************************************/
@@ -61,7 +65,7 @@ private:
 	FGenericTeamId TeamId;
 
 	UFUNCTION()
-	virtual void OnRep_TeamId() ;
+	virtual void OnRep_TeamId();
 
 protected:
 	virtual void BeginPlay() override;
@@ -104,8 +108,25 @@ private:
 	 */
 	void SetStatusGaugeEnabled(bool bIsEnabled);
 	/********************************************************/
+	/*						 	眩晕状态						*/
+	/********************************************************/
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Stun")
+	UAnimMontage* StunMontage;
+
+	/**
+	 * @brief 眩晕
+	 */
+	virtual void OnStun();
+	/**
+	 * @brief 从眩晕状态恢复
+	 */
+	virtual void OnRecoverFromStun();
+	/********************************************************/
 	/*						 死亡和重生 						*/
 	/********************************************************/
+
+
 public:
 	/**
 	 * @brief 是否死亡
@@ -116,23 +137,34 @@ public:
 	 * @brief 移除所有带有死亡标签的GameplayEffect
 	 */
 	void RespawnImmediately();
+
 private:
-	
 	/**
-	 * @brief 尝试获取到这个死亡状态,如果获取到了,进行回调函数
+	 * @brief 尝试获取到标签,然后绑定回调函数
 	 */
 	void BindGASChangeDelegates();
 	/**
 	 * @brief 获得死亡标签更新后的回调函数
 	 * @param Tag 
-	 * @param NewCount 
+	 * @param NewCount 当前标签的堆叠数量
 	 */
 	void DeathTagUpdated(const FGameplayTag Tag, int32 NewCount);
+
+	/**
+	 * @brief 获取眩晕标签的回调函数
+	 * @param Tag 
+	 * @param NewCount 当前标签的堆叠数量
+	 */
+	void StunTagUpdated(const FGameplayTag Tag, int32 NewCount);
+
 	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	float DeathMontageFinishTimeShift = -0.8f;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	UAnimMontage* DeathMontage;
+
 	FTransform MeshRelativeTransform;
+
 	FTimerHandle DeathMontageTimerHandle;
 	// 当死亡蒙太奇播放完成的时候调用
 	void DeathMontageFinished();
@@ -157,8 +189,7 @@ private:
 	 * @param bIsEnabled 
 	 */
 	void SetAIPerceptionStimuliSourceEnabled(bool bIsEnabled);
-	
+
 	// 用于标记哪些 Actor 能够被 AI 感知系统检测到
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> PerceptionStimuliSourceComponent;
-	
 };

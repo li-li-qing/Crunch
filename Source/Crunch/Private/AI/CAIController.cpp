@@ -58,6 +58,7 @@ void ACAIController::OnPossess(APawn* Possessed)
 	{
 		// 注册一个游戏标签（GameplayTag）变化的监听事件，当指定的标签（"Dead"）被添加或移除时，自动触发对应的回调函数
 		PawnASC->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(this,&ACAIController::PawnDeadTagUpdated);
+		PawnASC->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetStunStatTag()).AddUObject(this,&ACAIController::PawnStunTagUpdated);
 	}
 }
 
@@ -174,6 +175,7 @@ void ACAIController::PawnDeadTagUpdated(const FGameplayTag Tag, int32 Count)
 		GetBrainComponent()->StopLogic("Dead");
 		// 角色死亡时：清除感知记忆并禁用所有感知
 		ClearAndDisableAllSenses();
+		bIsPawnDead = true;
 	}
 	else
 	{
@@ -181,6 +183,20 @@ void ACAIController::PawnDeadTagUpdated(const FGameplayTag Tag, int32 Count)
 		GetBrainComponent()->StartLogic();
 		// 角色复活时：重新启用所有感知能力
 		EnabledALLSenses();
+		bIsPawnDead = false;
+	}
+}
+
+void ACAIController::PawnStunTagUpdated(const FGameplayTag Tag, int32 Count)
+{
+	if (bIsPawnDead) return;
+	if (Count != 0)
+	{
+		GetBrainComponent()->StopLogic("Stun");
+	}
+	else
+	{
+		GetBrainComponent()->StartLogic();
 	}
 }
 

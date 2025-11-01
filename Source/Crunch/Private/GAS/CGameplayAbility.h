@@ -14,7 +14,8 @@ UCLASS()
 class UCGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
-
+public:
+	UCGameplayAbility();
 protected:
 	UAnimInstance* GetOwnerAnimInstance() const;
 
@@ -30,4 +31,37 @@ protected:
 	                                                           float SphereSweepRadius = 30.f,ETeamAttitude::Type TargetTeam = ETeamAttitude::Hostile,
 	                                                           bool bDrawDebug = false,
 	                                                           bool bIgnoreSelf = true) const;
+	FORCEINLINE bool ShouldDrawDebug() const {return bShouldDrawDebug;}
+
+	/**
+	 * @brief 对技能施法者自身施加推力效果
+	 */
+	void PushSelf(const FVector& PushVel);
+
+	/**
+	 * @brief 向指定目标施加推力（通过事件驱动）
+	 * @param Target 被击飞的目标
+	 * @param PushVel 击飞的速度
+	 */
+	void PushTarget(AActor* Target,const FVector& PushVel);
+	/**
+	 * @brief 获取技能施法者的角色对象（带缓存优化）
+	 * @return 
+	 */
+	ACharacter* GetOwningAvatarCharacter() ;
+
+	/**
+	 * @brief 应用伤害到目标(使用Effect)
+	 * @param HitResult 击中的目标
+	 * @param GameplayEffect 效果器
+	 * @param Level 等级
+	 */
+	void ApplyGameplayEffectToHitResultActor(const FHitResult& HitResult , TSubclassOf<UGameplayEffect> GameplayEffect,int Level = 1);
+private:
+	UPROPERTY(EditDefaultsOnly,Category="Debug")
+	bool bShouldDrawDebug = false;
+
+	// 技能施法者
+	UPROPERTY()
+	TObjectPtr<ACharacter> AvatarCharacter;
 };

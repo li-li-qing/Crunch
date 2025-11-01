@@ -10,6 +10,9 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GAS/CAbilitySystemStatics.h"
+#include "Kismet/GameplayStatics.h"
 
 
 ACPlayerCharacter::ACPlayerCharacter()
@@ -83,7 +86,25 @@ void ACPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 }
 
 
-
+void ACPlayerCharacter::SetInputEnabledFromPlayerController(bool bEnabled)
+{
+	// 获取玩家控制器
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (!PlayerController)
+	{
+		return;
+	}
+	if (bEnabled)
+	{
+		// 启用输入
+		EnableInput(PlayerController);
+	}
+	else
+	{
+		// 禁用输入
+		DisableInput(PlayerController);
+	}
+}
 
 void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionValue, ECAbilityInputID InputID)
 {
@@ -99,6 +120,13 @@ void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionV
 	{
 		// 通知AbilitySystemComponent：某个输入ID被释放
 		GetAbilitySystemComponent()->AbilityLocalInputReleased((int32)InputID);
+	}
+
+	if (InputID == ECAbilityInputID::BasicAttack)
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			this, UCAbilitySystemStatics::GetBasicAttackInputPressedTag(), FGameplayEventData());
+		Server_SendGameplayEventToSelf(UCAbilitySystemStatics::GetBasicAttackInputPressedTag(), FGameplayEventData());
 	}
 }
 
@@ -138,18 +166,21 @@ FVector ACPlayerCharacter::GetMoveForwardDirection() const
 
 void ACPlayerCharacter::OnDeath()
 {
-	APlayerController* PlayerController = GetController<APlayerController>();
-	if (PlayerController)
-	{
-		DisableInput(PlayerController);
-	}
+	SetInputEnabledFromPlayerController(false);
 }
 
 void ACPlayerCharacter::OnRespawn()
 {
-	APlayerController* PlayerController = GetController<APlayerController>();
-	if (PlayerController)
-	{
-		EnableInput(PlayerController);
-	}
+	SetInputEnabledFromPlayerController(true);
+}
+
+void ACPlayerCharacter::OnStun()
+{
+	SetInputEnabledFromPlayerController(false);
+}
+
+void ACPlayerCharacter::OnRecoverFromStun()
+{
+	if (IsDead()) return;
+	SetInputEnabledFromPlayerController(true);
 }

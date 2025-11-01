@@ -31,10 +31,7 @@ public:
 	// 设置玩家输入组件
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)override;
 
-
 	
-
-
 private:
 	// 弹簧臂
 	// VisibleDefaultsOnly: 仅在默认值面板中可见，不能在实例中修改
@@ -44,6 +41,7 @@ private:
 	UPROPERTY(VisibleDefaultsOnly,Category = "View")
 	TObjectPtr<UCameraComponent> CameraComp;
 
+	
 	/********************************************************/
 	/*					输入行为	  							*/
 	/********************************************************/
@@ -63,6 +61,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TMap<ECAbilityInputID,TObjectPtr<UInputAction>> GameplayAbilityInputActions;
 
+	/**
+	 * @brief 设置玩家的输入
+	 * @param bEnabled 是否开启输入
+	 */
+	void SetInputEnabledFromPlayerController(bool bEnabled);
 	/**
 	 * @brief 处理技能输入事件（按下/释放）
 	 * @param InputActionValue 输入动作的值
@@ -85,6 +88,19 @@ private:
 	/********************************************************/
 	virtual void OnDeath() override;
 	virtual void OnRespawn() override;
+
+
+
+	/********************************************************/
+	/*					眩晕状态								*/
+	/********************************************************/
+public:
+protected:
+private:
+	virtual void OnStun() override;
+	virtual void OnRecoverFromStun() override;
+
+
 
 	
 	

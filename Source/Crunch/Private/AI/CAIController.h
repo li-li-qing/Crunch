@@ -85,4 +85,13 @@ private:
 	 * @brief 响应角色死亡标签变化的回调函数
 	 */
 	void PawnDeadTagUpdated(const FGameplayTag Tag,int32 Count);
+
+	/**
+	 * @brief 角色眩晕标签的更新回调函数
+	 * @param Tag 
+	 * @param Count 
+	 */
+	void PawnStunTagUpdated(const FGameplayTag Tag,int32 Count);
+
+	bool bIsPawnDead = false;
 };

@@ -21,10 +21,18 @@ public:
 	 */
 	static FGameplayTag GetBasicAttackAbilityTag();
 
+	static FGameplayTag GetBasicAttackInputPressedTag();
 	/**
 	 * @brief 获得死亡状态标签
 	 * @return 
 	 */
 	static FGameplayTag GetDeadStatTag();
+
+	/**
+	 * @brief 获得眩晕标签
+	 * @return 
+	 */
+	static FGameplayTag GetStunStatTag();
+
 	
 };

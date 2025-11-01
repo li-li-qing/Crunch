@@ -2,7 +2,7 @@
 
 
 #include "Character/CCharacter.h"
-
+#include "AbilitySystemBlueprintLibrary.h"
 #include "MovieSceneTracksComponentTypes.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
+
 ACCharacter::ACCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -28,7 +29,8 @@ ACCharacter::ACCharacter()
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidgetComponent"));
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
 
-	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSourceComponent"));
+	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(
+		TEXT("PerceptionStimuliSourceComponent"));
 	BindGASChangeDelegates();
 }
 
@@ -66,7 +68,19 @@ bool ACCharacter::IsLocallyControlledByPlayer() const
 void ACCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ACCharacter,TeamId);
+	DOREPLIFETIME(ACCharacter, TeamId);
+}
+
+void ACCharacter::Server_SendGameplayEventToSelf_Implementation(const FGameplayTag& EventTag,
+	const FGameplayEventData& EventData)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this,EventTag,EventData);
+}
+
+bool ACCharacter::Server_SendGameplayEventToSelf_Validate(const FGameplayTag& EventTag,
+	const FGameplayEventData& EventData)
+{
+	return true;
 }
 
 void ACCharacter::SetGenericTeamId(const FGenericTeamId& NewTeamID)
@@ -103,6 +117,9 @@ void ACCharacter::BindGASChangeDelegates()
 		// 尝试获取到这个死亡状态,如果获取到了,进行回调函数
 		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetDeadStatTag()).AddUObject(
 			this, &ACCharacter::DeathTagUpdated);
+		// 尝试获取到这个眩晕状态,如果获取到了,进行回调函数
+		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetStunStatTag()).AddUObject(
+			this, &ACCharacter::StunTagUpdated);
 	}
 }
 
@@ -115,6 +132,23 @@ void ACCharacter::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
 	else
 	{
 		Respawn();
+	}
+}
+
+void ACCharacter::StunTagUpdated(const FGameplayTag Tag, int32 NewCount)
+{
+	if (IsDead()) return;
+
+	if (NewCount != 0)
+	{
+		OnStun();
+		PlayAnimMontage(StunMontage);
+		
+	}
+	else
+	{
+		OnRecoverFromStun();
+		StopAnimMontage(StunMontage);
 	}
 }
 
@@ -174,6 +208,7 @@ void ACCharacter::UpdateHeadGaugeVisibility()
 		OverHeadWidgetComponent->SetHiddenInGame(DistSquared > HeadStatGaugeVisibilityRangeSquared);
 	}
 }
+
 void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
 {
 	GetWorldTimerManager().ClearTimer(HeadStatGaugeVisibilityUpdateTimerHandle);
@@ -189,6 +224,15 @@ void ACCharacter::SetStatusGaugeEnabled(bool bIsEnabled)
 	}
 }
 
+void ACCharacter::OnStun()
+{
+}
+
+void ACCharacter::OnRecoverFromStun()
+{
+	
+}
+
 bool ACCharacter::IsDead() const
 {
 	return GetAbilitySystemComponent()->HasMatchingGameplayTag(UCAbilitySystemStatics::GetDeadStatTag());
@@ -198,8 +242,8 @@ void ACCharacter::RespawnImmediately()
 {
 	if (HasAuthority())
 	{
-		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(UCAbilitySystemStatics::GetDeadStatTag()));
-		
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(
+			FGameplayTagContainer(UCAbilitySystemStatics::GetDeadStatTag()));
 	}
 }
 
@@ -210,7 +254,6 @@ void ACCharacter::DeathMontageFinished()
 	{
 		SetRagdollEnabled(true);
 	}
-	
 }
 
 void ACCharacter::PlayDeathAnimation()
@@ -219,7 +262,8 @@ void ACCharacter::PlayDeathAnimation()
 	{
 		// 播放死亡动画蒙太奇并获取动画时长
 		float MontageDuration = PlayAnimMontage(DeathMontage);
-		GetWorldTimerManager().SetTimer(DeathMontageTimerHandle, this,&ACCharacter::DeathMontageFinished,MontageDuration+DeathMontageFinishTimeShift);
+		GetWorldTimerManager().SetTimer(DeathMontageTimerHandle, this, &ACCharacter::DeathMontageFinished,
+		                                MontageDuration + DeathMontageFinishTimeShift);
 	}
 }
 
@@ -241,7 +285,7 @@ void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
 		// 禁用所有碰撞
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		// 将骨骼网格体重新附加到根组件
-		GetMesh()->AttachToComponent(GetRootComponent(),FAttachmentTransformRules::KeepRelativeTransform);
+		GetMesh()->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		// 恢复骨骼网格体的初始相对变换
 		GetMesh()->SetRelativeTransform(MeshRelativeTransform);
 	}
@@ -260,7 +304,7 @@ void ACCharacter::StartDeathSequence()
 	// 把头上的血条隐藏
 	SetStatusGaugeEnabled(false);
 	// 禁用角色的移动
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	// 禁用胶囊的碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 设置自身不被AI察觉
@@ -279,7 +323,7 @@ void ACCharacter::Respawn()
 	// 重新启用胶囊体碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	// 重置移动模式为移动
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	// 停止所有正在播放的动画蒙太奇
 	GetMesh()->GetAnimInstance()->StopAllMontages(0.f);
 	// 重新启用状态条（血条等UI）
@@ -295,7 +339,7 @@ void ACCharacter::Respawn()
 			SetActorTransform(StartSpot->GetActorTransform());
 		}
 	}
-	
+
 	if (CAbilitySystemComponent)
 	{
 		// 应用所有的效果

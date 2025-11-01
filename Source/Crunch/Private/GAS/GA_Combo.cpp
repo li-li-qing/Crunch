@@ -95,7 +95,7 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData Data)
 	if (EventTag == GetCombaChangedEventEndTag())
 	{
 		NextComboName = NAME_None; // 清除下一段连招
-		UE_LOG(LogTemp,Warning,TEXT("Next Combo is cleared"));
+		//UE_LOG(LogTemp,Warning,TEXT("Next Combo is cleared"));
 		return;
 	}
 	//解析标签层级（如"Ability.Combo.Change.Combo01" -> ["Ability","Combo","Change","Combo01"]）
@@ -104,7 +104,7 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData Data)
 	// 取最后一级作为下一连招名称（如"Combo01"）
 	NextComboName = TagNames.Last();
  
-	UE_LOG(LogTemp,Warning,TEXT("Next combo is now : %s"),*NextComboName.ToString());
+	//UE_LOG(LogTemp,Warning,TEXT("Next combo is now : %s"),*NextComboName.ToString());
 }
 
 void UGA_Combo::SetupWaitComboInputPress()
@@ -135,23 +135,7 @@ void UGA_Combo::DoDamage(FGameplayEventData Data)
 	{
 		// 获取当前连招段对应的GameplayEffect
 		TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
-		// 创建GameplayEffectSpec（效果规格）
-		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(
-			GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
-		
-		// 创建并配置GameplayEffect的上下文（Context）
-		FGameplayEffectContextHandle EffectContext = MakeEffectContext(GetCurrentAbilitySpecHandle(),
-		                                                               GetCurrentActorInfo());
-		// 将命中结果（HitResult）添加到上下文中
-		EffectContext.AddHitResult(HitResult);
-		// 将上下文绑定到GameplayEffectSpec
-		EffectSpecHandle.Data->SetContext(EffectContext);
-
-		// 将效果应用到命中的目标
-		ApplyGameplayEffectSpecToTarget(GetCurrentAbilitySpecHandle(), CurrentActorInfo, CurrentActivationInfo,
-		                                EffectSpecHandle,
-		                                UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(
-			                                HitResult.GetActor()));
+		ApplyGameplayEffectToHitResultActor(HitResult,GameplayEffect,GetAbilityLevel(CurrentSpecHandle,CurrentActorInfo));
 	}
 	
 }
