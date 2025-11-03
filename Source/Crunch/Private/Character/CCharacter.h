@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
 #include "GenericTeamAgentInterface.h"
+#include "GAS/CGameplayAbilityTypes.h"
 #include "CCharacter.generated.h"
 
 
@@ -47,6 +48,12 @@ public:
 	bool IsLocallyControlledByPlayer() const;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	/**
+	 * @brief 获得所有的能力
+	 * @return 返回键值对(技能输入ID - 技能)
+	 */
+	const TMap<ECAbilityInputID,TSubclassOf<class UGameplayAbility>>& GetAbilities() const;
+	
 	UFUNCTION(Server,Reliable,WithValidation)
 	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag,const FGameplayEventData& EventData);
 	

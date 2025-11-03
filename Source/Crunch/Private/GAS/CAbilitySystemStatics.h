@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CAbilitySystemStatics.generated.h"
+class UGameplayAbility;
 /**
  * 
  */
@@ -33,6 +34,20 @@ public:
 	 * @return 
 	 */
 	static FGameplayTag GetStunStatTag();
+
+	/**
+	 * 获取技能的静态冷却时间（从GameplayEffect配置中提取）
+	 * @param Ability 要查询的技能对象
+	 * @return 冷却时间（秒），无效时返回0.0f
+	 */
+	static float GetStaticCooldownDurationForAbility(const UGameplayAbility* Ability);
+
+	/**
+	 * 获取技能的静态资源消耗（从GameplayEffect配置中提取）
+	 * @param Ability 要查询的技能对象
+	 * @return 资源消耗量，无效时返回0.0f
+	 */
+	static float GetStaticCostForAbility(const UGameplayAbility* Ability);
 
 	
 };

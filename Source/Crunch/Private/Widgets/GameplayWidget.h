@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "GAS/CGameplayAbilityTypes.h"
 #include "GameplayWidget.generated.h"
+
 
 class UAbilitySystemComponent;
 class UValueGauge;
+class UAbilityListView;
 /**
  * @brief 主UI界面
  */
@@ -18,6 +21,9 @@ class UGameplayWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
+	// 配置技能
+	void ConfigureAbilities(const TMap<ECAbilityInputID,TSubclassOf<class UGameplayAbility>>& Abilities);
+	
 private:
 	// 血条
 	UPROPERTY(meta = (BindWidget))
@@ -26,6 +32,10 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UValueGauge> ManaBar;
 
+	// 技能列表
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAbilityListView> AbilityListView;
+	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
 };

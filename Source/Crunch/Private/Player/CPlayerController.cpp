@@ -56,5 +56,7 @@ void ACPlayerController::SpawnGameplayWidget()
 	if (GameplayWidget)
 	{
 		GameplayWidget->AddToViewport();
+		// 把拥有的技能传给UI
+		GameplayWidget->ConfigureAbilities(CPlayerCharacter->GetAbilities());
 	}
 }

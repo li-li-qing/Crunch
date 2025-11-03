@@ -4,14 +4,24 @@
 #include "Widgets/GameplayWidget.h"
 #include"AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "GAS/CAbilitySystemComponent.h"
 #include "ValueGauge.h"
 #include "GAS/CAttributeSet.h"
+#include "Widgets/AbilityListView.h"
 
 void UGameplayWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	// 获取玩家角色的AbilitySystemComponent
 	OwnerAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningPlayerPawn());
+
+	// 获得所有的技能
+	// const UCAbilitySystemComponent* CAbilitySystemComponent = Cast<UCAbilitySystemComponent>(OwnerAbilitySystemComponent);
+	// if (CAbilitySystemComponent)
+	// {
+	// 	ConfigureAbilities(CAbilitySystemComponent->GetAbilities());
+	// }
+
 	if (OwnerAbilitySystemComponent)
 	{
 		// 绑定血条到Health/MaxHealth属性
@@ -21,4 +31,9 @@ void UGameplayWidget::NativeConstruct()
 		ManaBar->SetAndBoundToGameplayAttribute(OwnerAbilitySystemComponent, UCAttributeSet::GetManaAttribute(),
 		                                        UCAttributeSet::GetMaxManaAttribute());
 	}
+}
+
+void UGameplayWidget::ConfigureAbilities(const TMap<ECAbilityInputID, TSubclassOf<class UGameplayAbility>>& Abilities)
+{
+	AbilityListView->ConfigureAbilities(Abilities);
 }

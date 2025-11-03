@@ -71,8 +71,13 @@ void ACCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Ou
 	DOREPLIFETIME(ACCharacter, TeamId);
 }
 
+const TMap<ECAbilityInputID, TSubclassOf<class UGameplayAbility>>& ACCharacter::GetAbilities() const
+{
+	return CAbilitySystemComponent->GetAbilities();
+}
+
 void ACCharacter::Server_SendGameplayEventToSelf_Implementation(const FGameplayTag& EventTag,
-	const FGameplayEventData& EventData)
+                                                                const FGameplayEventData& EventData)
 {
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this,EventTag,EventData);
 }

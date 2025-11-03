@@ -30,17 +30,20 @@ public:
 	void GiveInitialAbilities();
 
 	/**
-	 * @brief 
+	 * @brief 将血量跟蓝量设置为最大血量跟蓝量,用于初始化
 	 */
 	void ApplyFullStatEffect();
+
+	// 输入ID 与 技能对应表
+	const TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& GetAbilities() const;
 
 private:
 	/**
 	 * @brief 血量更新的时候调用
 	 */
 	void HealthUpdated(const FOnAttributeChangeData& ChangeData);
-	
-	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect,int Level = 1);
+
+	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level = 1);
 	// 全部的状态效果
 	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
 	TSubclassOf<UGameplayEffect> FullStatEffect;
@@ -53,8 +56,8 @@ private:
 
 	// 存放所有的技能
 	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
-	TMap<ECAbilityInputID,TSubclassOf<UGameplayAbility>> Abilities;
+	TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>> Abilities;
 	// 存放所有基础的能力
 	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
-	TMap<ECAbilityInputID,TSubclassOf<UGameplayAbility>> BasicAbilities;
+	TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>> BasicAbilities;
 };
