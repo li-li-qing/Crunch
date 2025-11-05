@@ -13,9 +13,11 @@
 #include "GAS/CAbilitySystemStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Crunch/Crunch.h"
 #include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "Crunch/Crunch.h"
 
 ACCharacter::ACCharacter()
 {
@@ -29,6 +31,9 @@ ACCharacter::ACCharacter()
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidgetComponent"));
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_SpringArm,ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Target,ECR_Ignore);
+	
 	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(
 		TEXT("PerceptionStimuliSourceComponent"));
 	BindGASChangeDelegates();
@@ -125,6 +130,9 @@ void ACCharacter::BindGASChangeDelegates()
 		// 尝试获取到这个眩晕状态,如果获取到了,进行回调函数
 		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetStunStatTag()).AddUObject(
 			this, &ACCharacter::StunTagUpdated);
+		// 尝试获取到这个瞄准状态,如果获取到了,进行回调函数
+		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetAimStatTag()).AddUObject(
+			this, &ACCharacter::AimTagUpdated);
 	}
 }
 
@@ -155,6 +163,25 @@ void ACCharacter::StunTagUpdated(const FGameplayTag Tag, int32 NewCount)
 		OnRecoverFromStun();
 		StopAnimMontage(StunMontage);
 	}
+}
+
+void ACCharacter::AimTagUpdated(const FGameplayTag Tag, int32 NewCount)
+{
+	SetIsAimming(NewCount != 0);
+}
+
+void ACCharacter::SetIsAimming(bool bIsAimming)
+{
+	// 是否使用控制器旋转
+	bUseControllerRotationYaw = bIsAimming;
+	// 如果使用控制器的旋转,就关闭旋转时候角色朝向旋转方向这个功能
+	GetCharacterMovement()->bOrientRotationToMovement = !bIsAimming;
+	
+	OnAimStateChanged(bIsAimming);
+}
+
+void ACCharacter::OnAimStateChanged(bool bIsAimming)
+{
 }
 
 void ACCharacter::Tick(float DeltaTime)

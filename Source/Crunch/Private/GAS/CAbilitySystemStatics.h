@@ -49,5 +49,12 @@ public:
 	 */
 	static float GetStaticCostForAbility(const UGameplayAbility* Ability);
 
+	/**
+	 * @brief 获得瞄准标签
+	 * @return 
+	 */
+	static FGameplayTag GetAimStatTag();
+
+	static FGameplayTag GetCameraShakeGameplayCueTag();
 	
 };

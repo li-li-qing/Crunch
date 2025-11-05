@@ -163,7 +163,26 @@ private:
 	 * @param NewCount 当前标签的堆叠数量
 	 */
 	void StunTagUpdated(const FGameplayTag Tag, int32 NewCount);
+	
+	/**
+	 * @brief 获取瞄准标签的回调函数
+	 * @param Tag 
+	 * @param NewCount 当前标签的堆叠数量
+	 */
+	void AimTagUpdated(const FGameplayTag Tag, int32 NewCount);
 
+	/**
+	 * @brief 设置瞄准状态
+	 * @param bIsAimming 
+	 */
+	void SetIsAimming(bool bIsAimming);
+
+	/**
+	 * @brief 当瞄准状态变更时调用
+	 * @param bIsAimming 
+	 */
+	virtual void OnAimStateChanged(bool bIsAimming);
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	float DeathMontageFinishTimeShift = -0.8f;
 

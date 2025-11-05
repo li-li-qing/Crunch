@@ -11,8 +11,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Crunch/Crunch.h"
 #include "GAS/CAbilitySystemStatics.h"
 #include "Kismet/GameplayStatics.h"
+#include "Crunch/Crunch.h"
 
 
 ACPlayerCharacter::ACPlayerCharacter()
@@ -23,7 +25,8 @@ ACPlayerCharacter::ACPlayerCharacter()
 	SpringArmComp->SetupAttachment(GetRootComponent());
 	// 使用pawn的控制器旋转
 	SpringArmComp->bUsePawnControlRotation = true;
-
+	SpringArmComp->ProbeChannel = ECC_SpringArm;
+	
 	// 初始化摄像机
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	// 将摄像机附加到弹簧臂上
@@ -183,4 +186,65 @@ void ACPlayerCharacter::OnRecoverFromStun()
 {
 	if (IsDead()) return;
 	SetInputEnabledFromPlayerController(true);
+}
+
+void ACPlayerCharacter::OnAimStateChanged(bool bIsAimming)
+{
+	// 清除现有的插值定时器（防止多个动画同时进行）
+	GetWorldTimerManager().ClearTimer(CameraLerpTimerHandle);
+	// 根据瞄准状态选择目标位置：
+	// 瞄准状态：使用CameraAimLocalOffset（相机瞄准位置偏移）
+	// 普通状态：使用原点(0,0,0)（默认相机位置）
+	LerpCameraToLocalOffsetLocation(bIsAimming ? CameraAimLocalOffset : FVector{0.f});
+}
+
+void ACPlayerCharacter::LerpCameraToLocalOffsetLocation(const FVector& Goal)
+{
+	// 清除现有的插值定时器（防止多个动画同时进行）
+	GetWorldTimerManager().ClearTimer(CameraLerpTimerHandle);
+
+	// 在下一帧立即开始插值动画
+	// SetTimerForNextTick：下一帧执行，创建平滑的逐帧动画
+	GetWorldTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateUObject(
+			this, // 调用对象
+			&ACPlayerCharacter::TickCameraLocalOffsetLerp, // 回调函数
+			Goal // 传递的目标位置参数
+		)
+	);
+}
+
+void ACPlayerCharacter::TickCameraLocalOffsetLerp(FVector Goal)
+{
+	// 获取相机当前局部位置
+	FVector CurrentLocalOffset = CameraComp->GetRelativeLocation();
+
+	//  检查是否已达到目标位置（容差1个单位）
+	if (FVector::Dist(CurrentLocalOffset, Goal) < 10.f)
+	{
+		// 已到达目标：精确定位并结束动画
+		CameraComp->SetRelativeLocation(Goal);
+		// 清除现有的插值定时器（防止多个动画同时进行）
+		GetWorldTimerManager().ClearTimer(CameraLerpTimerHandle);
+		return; // 停止插值循环
+	}
+
+	// 计算本帧的插值系数（基于时间增量）
+	// 根据帧时间和插值速度计算过渡比例
+	float LerpAlpha = FMath::Clamp(GetWorld()->GetDeltaSeconds() * CameraLerpSpeed, 0.f, 1.f);
+
+	// 线性插值计算新位置
+	FVector NewLocalOffset = FMath::Lerp(CurrentLocalOffset, Goal, LerpAlpha);
+
+	//  应用新位置到相机
+	CameraComp->SetRelativeLocation(NewLocalOffset);
+
+	//  设置下一帧继续插值（创建动画循环）
+	GetWorldTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateUObject(
+			this,
+			&ACPlayerCharacter::TickCameraLocalOffsetLerp,
+			Goal
+		)
+	);
 }

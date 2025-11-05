@@ -5,6 +5,9 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GAS/CAbilitySystemStatics.h"
 
 
 void UCAnimInstance::NativeInitializeAnimation()
@@ -16,6 +19,13 @@ void UCAnimInstance::NativeInitializeAnimation()
 		// 获得玩家移动组件
 		OwnerCharacterMovementComponent = OwnerCharacter->GetCharacterMovement();
 	}
+
+	// 获得能力系统
+	UAbilitySystemComponent* OwnerASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TryGetPawnOwner());
+	if (OwnerASC)
+	{
+		OwnerASC->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetAimStatTag()).AddUObject(this,&UCAnimInstance::OwnerAimTagChanged);
+	}
 }
 
 void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -24,8 +34,10 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (OwnerCharacter)
 	{
+		// 获取到角色的速度
+		FVector Velocity = OwnerCharacter->GetVelocity();
 		// 获取玩家速度
-		Speed =  OwnerCharacter->GetVelocity().Length();
+		Speed = Velocity.Length();
 
 		FRotator BodyRotation = OwnerCharacter->GetActorRotation();
 
@@ -55,19 +67,33 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// 返回值: 返回一个标准化的旋转差值，确保所有角度都在[-180,180]范围内
 		// 这个偏移量将用于控制头部/摄像机相对于身体的额外旋转
 		LookRotationOffSet = UKismetMathLibrary::NormalizedDeltaRotator(ControlRotation, BodyRotation);
-		
-		if (OwnerCharacterMovementComponent)
-		{
-			// 获得是否跳跃
-			bIsJumping = OwnerCharacterMovementComponent->IsFalling();
+		// 计算角色在控制方向上的速度分量
+		FwdSpeed = Velocity.Dot(ControlRotation.Vector());
+		// 叉积计算
+		RightSpeed = -Velocity.Dot(ControlRotation.Vector().Cross(FVector::UpVector));
+	}
+	if (OwnerCharacterMovementComponent)
+	{
+		// 获得是否跳跃
+		bIsJumping = OwnerCharacterMovementComponent->IsFalling();
 			
-		}
 	}
 }
 
 void UCAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
+}
+
+bool UCAnimInstance::ShouldDoFullBody() const
+{
+	return (GetSpeed() <= 0) && !(GetIsAiming());
+}
+
+void UCAnimInstance::OwnerAimTagChanged(FGameplayTag Tag, int32 NewCount)
+{
+	// 当获取到标签的时候,调整瞄准的bool
+	bIsAiming = NewCount != 0;
 }
 
 

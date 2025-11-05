@@ -134,6 +134,20 @@ void UCGameplayAbility::PushTarget(AActor* Target, const FVector& PushVel)
 	);
 }
 
+void UCGameplayAbility::PushTargets(const TArray<AActor*>& Targets, const FVector& PushVel)
+{
+	for (AActor* Target : Targets)
+	{
+		PushTarget(Target, PushVel);
+	}
+}
+
+void UCGameplayAbility::PushTargets(const FGameplayAbilityTargetDataHandle& TargetDataHandle, const FVector& PushVel)
+{
+	TArray<AActor*> Targets = UAbilitySystemBlueprintLibrary::GetAllActorsFromTargetData(TargetDataHandle);
+	PushTargets(Targets,PushVel);
+}
+
 ACharacter* UCGameplayAbility::GetOwningAvatarCharacter()
 {
 	if (!AvatarCharacter)

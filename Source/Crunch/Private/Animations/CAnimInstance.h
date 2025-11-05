@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "GameplayTagContainer.h"
 #include "CAnimInstance.generated.h"
 
 /**
@@ -74,6 +75,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
 	FORCEINLINE float GetYawSpeed() const { return YawSpeed; };
 
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetFwdSpeed() const { return FwdSpeed; };
+
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE float GetRightSpeed() const { return RightSpeed; };
 	/**
 	 * @brief 获得 平滑的Yaw 的速度
 	 * @return 获得 平滑的Yaw 的速度
@@ -96,19 +102,40 @@ public:
 	FORCEINLINE bool GetIsOnGround() const { return !bIsJumping; };
 
 	/**
+	 * @brief 获得是否瞄准状态
+	 * @return 
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
+	FORCEINLINE bool GetIsAiming() const { return bIsAiming; };
+
+	/**
 	 * @brief 获得Yaw的偏移量
 	 * @return 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
-	FORCEINLINE float GetLookYawOffset() const{return LookRotationOffSet.Yaw;}
+	FORCEINLINE float GetLookYawOffset() const { return LookRotationOffSet.Yaw; }
 
 	/**
 	 * @brief 获得Pitch的偏移量
 	 * @return 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Animation", meta=(BlueprintThreadSafe))
-	FORCEINLINE float GetLookPitchOffset() const{return LookRotationOffSet.Pitch;}
+	FORCEINLINE float GetLookPitchOffset() const { return LookRotationOffSet.Pitch; }
+
+	/**
+	 * @brief 是否启用全身状态
+	 * @return 
+	 */
+	UFUNCTION(BlueprintCallable,  meta=(BlueprintThreadSafe))
+	bool ShouldDoFullBody() const;
 private:
+	/**
+	 * @brief 当获取瞄准标签后调用这个函数
+	 * @param Tag 
+	 * @param NewCount 
+	 */
+	void OwnerAimTagChanged(FGameplayTag Tag, int32 NewCount);
+
 	// 获取玩家角色
 	UPROPERTY()
 	class ACharacter* OwnerCharacter;
@@ -120,6 +147,10 @@ private:
 	// 玩家的移动速度
 	float Speed;
 
+	// 2D混合空间前进的速度
+	float FwdSpeed;
+	// 2D混合空间右移的速度
+	float RightSpeed;
 	// 倾斜的速度
 	float YawSpeed;
 	// 平滑倾斜的速度
@@ -127,6 +158,11 @@ private:
 
 	// 是否跳跃
 	bool bIsJumping;
+
+	// 是否在瞄准状态
+	bool bIsAiming;
+
+	
 
 
 	// 倾斜速度平滑线性插值速度

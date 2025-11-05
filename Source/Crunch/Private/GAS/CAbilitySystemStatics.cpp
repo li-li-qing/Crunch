@@ -62,3 +62,13 @@ float UCAbilitySystemStatics::GetStaticCostForAbility(const UGameplayAbility* Ab
 	return FMath::Abs(Cost);
 	
 }
+
+FGameplayTag UCAbilitySystemStatics::GetAimStatTag()
+{
+	return FGameplayTag::RequestGameplayTag("Stats.Aim");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetCameraShakeGameplayCueTag()
+{
+	return FGameplayTag::RequestGameplayTag("GameplayCue.CameraShake");
+}

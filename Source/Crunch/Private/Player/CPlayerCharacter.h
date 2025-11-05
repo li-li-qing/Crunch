@@ -101,6 +101,45 @@ private:
 	virtual void OnRecoverFromStun() override;
 
 
+	/********************************************************/
+	/*					Gameplay Ability					*/
+	/********************************************************/
+public:
+protected:
+private:
+	/**
+	 * @brief 当瞄准状态变更的时候调用
+	 * @param bIsAimming 
+	 */
+	virtual void OnAimStateChanged(bool bIsAimming) override;
+
+	/********************************************************/
+	/*					摄像机视角							*/
+	/********************************************************/
+public:
+	
+protected:
+private:
+	UPROPERTY(EditDefaultsOnly, Category = view)
+	FVector CameraAimLocalOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = view)
+	float CameraLerpSpeed = 20.f;
+
+	FTimerHandle CameraLerpTimerHandle;
+
+	/**
+	 * @brief 开始相机位置插值动画
+	 * @param Goal 目标局部偏移位置
+	 */
+	void LerpCameraToLocalOffsetLocation(const FVector& Goal);
+
+	/**
+	 * @brief 每帧更新相机位置插值
+	 * @param Goal 目标局部偏移位置
+	 */
+	void TickCameraLocalOffsetLerp(FVector Goal);
+
 
 	
 	
