@@ -109,24 +109,24 @@ void UCGameplayAbility::PushSelf(const FVector& PushVel)
 
 void UCGameplayAbility::PushTarget(AActor* Target, const FVector& PushVel)
 {
-	// ► 1. 安全检查：目标是否有效
+	// 安全检查：目标是否有效
 	if (!Target) return;
 
-	// ► 2. 创建Gameplay事件数据容器
+	//  创建Gameplay事件数据容器
 	FGameplayEventData EventData;
 
-	// ► 3. 创建单目标碰撞数据
+	//  创建单目标碰撞数据
 	FGameplayAbilityTargetData_SingleTargetHit* HitData = new FGameplayAbilityTargetData_SingleTargetHit();
 
-	// ► 4. 设置碰撞结果（用于传递推力方向）
+	//  设置碰撞结果（用于传递推力方向）
 	FHitResult HitResult;
 	HitResult.ImpactNormal = PushVel; // 使用推力向量作为碰撞法线
 	HitData->HitResult = HitResult; // 将碰撞结果存入目标数据
 
-	// ► 5. 将目标数据添加到事件数据
+	//  将目标数据添加到事件数据
 	EventData.TargetData.Add(HitData);
 
-	// ► 6. 向目标Actor发送起飞事件
+	//  向目标Actor发送起飞事件
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		Target, // 接收事件的目标
 		UGAP_Launch::GetLauchedAbilityActivationTag(), // 起飞事件标签
