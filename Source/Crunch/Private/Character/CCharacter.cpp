@@ -18,7 +18,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Crunch/Crunch.h"
-
+#include "GameplayEffectTypes.h"
 ACCharacter::ACCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -53,10 +53,10 @@ void ACCharacter::Server_SideInit()
 {
 	// 初始化GAS的OwnerActor和AvatarActor（均为当前角色）
 	CAbilitySystemComponent->InitAbilityActorInfo(this, this);
-	// 应用初始GameplayEffect（如初始血量、攻击力Buff等）
-	CAbilitySystemComponent->ApplyInitialEffects();
-	// 赋予角色初始技能（Gameplay Abilities）
-	CAbilitySystemComponent->GiveInitialAbilities();
+
+	// 初始化属性
+	CAbilitySystemComponent->ServerSideInit();
+
 }
 
 void ACCharacter::Client_SideInit()
@@ -133,6 +133,8 @@ void ACCharacter::BindGASChangeDelegates()
 		// 尝试获取到这个瞄准状态,如果获取到了,进行回调函数
 		CAbilitySystemComponent->RegisterGameplayTagEvent(UCAbilitySystemStatics::GetAimStatTag()).AddUObject(
 			this, &ACCharacter::AimTagUpdated);
+
+		CAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UCAttributeSet::GetMoveSpeedAttribute()).AddUObject(this,&ACCharacter::MoveSpeedUpdated);
 	}
 }
 
@@ -182,6 +184,11 @@ void ACCharacter::SetIsAimming(bool bIsAimming)
 
 void ACCharacter::OnAimStateChanged(bool bIsAimming)
 {
+}
+
+void ACCharacter::MoveSpeedUpdated(const FOnAttributeChangeData& Data)
+{
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 }
 
 void ACCharacter::Tick(float DeltaTime)

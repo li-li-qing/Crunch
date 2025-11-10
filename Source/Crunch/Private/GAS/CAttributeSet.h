@@ -30,6 +30,9 @@ public:
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, MaxHealth);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, Mana);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, MaxMana);
+	ATTRIBUTE_ACCESSORS(UCAttributeSet, AttackDamage);
+	ATTRIBUTE_ACCESSORS(UCAttributeSet, Armor);
+	ATTRIBUTE_ACCESSORS(UCAttributeSet, MoveSpeed);
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	/**
 	 * @brief 在属性被修改前调用
@@ -54,6 +57,19 @@ private:
 	FGameplayAttributeData Mana;
 	UPROPERTY(ReplicatedUsing = OnRep_MaxMana)
 	FGameplayAttributeData MaxMana;
+
+	// 攻击力
+	UPROPERTY(ReplicatedUsing = OnRep_AttackDamage)
+	FGameplayAttributeData AttackDamage;
+
+	// 护甲
+	UPROPERTY(ReplicatedUsing = OnRep_Armor)
+	FGameplayAttributeData Armor;
+	
+	// 移动速度
+	UPROPERTY(ReplicatedUsing = OnRep_MoveSpeed)
+	FGameplayAttributeData MoveSpeed;
+
 	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldValue);
@@ -63,4 +79,10 @@ private:
 	void OnRep_Mana(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	void OnRep_AttackDamage(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	void OnRep_Armor(const FGameplayAttributeData& OldValue);
+	UFUNCTION()
+	void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue);
 };

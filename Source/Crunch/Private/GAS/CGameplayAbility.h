@@ -44,7 +44,6 @@ protected:
 	 * @param PushVel 击飞的速度
 	 */
 	void PushTarget(AActor* Target,const FVector& PushVel);
-
 	void PushTargets(const TArray<AActor*>& Targets,const FVector& PushVel);
 	void PushTargets(const FGameplayAbilityTargetDataHandle& TargetDataHandle,const FVector& PushVel);
 	/**

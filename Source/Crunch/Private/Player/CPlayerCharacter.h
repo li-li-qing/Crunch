@@ -14,7 +14,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-
+class UCHeroAttributeSet;
 /**
  * 
  */
@@ -112,6 +112,9 @@ private:
 	 * @param bIsAimming 
 	 */
 	virtual void OnAimStateChanged(bool bIsAimming) override;
+
+	// 角色的属性
+	TObjectPtr<UCHeroAttributeSet> HeroAttributeSet;
 
 	/********************************************************/
 	/*					摄像机视角							*/

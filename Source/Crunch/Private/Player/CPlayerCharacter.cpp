@@ -15,7 +15,7 @@
 #include "GAS/CAbilitySystemStatics.h"
 #include "Kismet/GameplayStatics.h"
 #include "Crunch/Crunch.h"
-
+#include "GAS/CHeroAttributeSet.h"
 
 ACPlayerCharacter::ACPlayerCharacter()
 {
@@ -37,6 +37,8 @@ ACPlayerCharacter::ACPlayerCharacter()
 	// 朝向移动的方向转动
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f);
+
+	HeroAttributeSet = CreateDefaultSubobject<UCHeroAttributeSet>(TEXT("HeroAttributeSet"));
 }
 
 void ACPlayerCharacter::PawnClientRestart()

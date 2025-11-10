@@ -182,6 +182,12 @@ private:
 	 * @param bIsAimming 
 	 */
 	virtual void OnAimStateChanged(bool bIsAimming);
+
+	/**
+	 * @brief 当移动速度的值改变的时候调用
+	 * @param Data 
+	 */
+	void MoveSpeedUpdated(const FOnAttributeChangeData& Data);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	float DeathMontageFinishTimeShift = -0.8f;

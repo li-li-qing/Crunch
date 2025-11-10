@@ -36,3 +36,49 @@ public:
 	UPROPERTY(EditAnywhere)
 	FVector PushVelocity;
 };
+
+USTRUCT(BlueprintType)
+struct FHeroBaseStats : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> Class;
+
+	// 力量
+	UPROPERTY(EditAnywhere)
+	float Strength;
+
+	// 智力
+	UPROPERTY(EditAnywhere)
+	float Intelligence;
+
+	// 力量的成长率
+	UPROPERTY(EditAnywhere)
+	float StrengthGrowthRate;
+
+	// 智力的成长率
+	UPROPERTY(EditAnywhere)
+	float IntelligenceGrowthRate;
+
+	// 基础的最大血量
+	UPROPERTY(EditAnywhere)
+	float BaseMaxHealth;
+
+	// 基础的最大蓝量
+	UPROPERTY(EditAnywhere)
+	float BaseMaxMana;
+
+	// 基础的攻击力
+	UPROPERTY(EditAnywhere)
+	float BaseAttackDamage;
+
+	// 基础的防御力
+	UPROPERTY(EditAnywhere)
+	float BaseArmor;
+
+	// 基础的移动速度
+	UPROPERTY(EditAnywhere)
+	float BaseMoveSpeed;
+	
+};
