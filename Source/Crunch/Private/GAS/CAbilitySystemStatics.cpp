@@ -72,3 +72,23 @@ FGameplayTag UCAbilitySystemStatics::GetCameraShakeGameplayCueTag()
 {
 	return FGameplayTag::RequestGameplayTag("GameplayCue.CameraShake");
 }
+
+FGameplayTag UCAbilitySystemStatics::GetHealthFullStatTag()
+{
+	return FGameplayTag::RequestGameplayTag("Stats.Health.Full");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetHealthEmptyStatTag()
+{
+	return FGameplayTag::RequestGameplayTag("Stats.Health.Empty");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetManaFullStatTag()
+{
+	return FGameplayTag::RequestGameplayTag("Stats.Mana.Full");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetManaEmptyStatTag()
+{
+	return FGameplayTag::RequestGameplayTag("Stats.Mana.Empty");
+}

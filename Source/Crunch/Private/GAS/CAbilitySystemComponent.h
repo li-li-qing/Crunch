@@ -55,7 +55,12 @@ private:
 	 * @brief 血量更新的时候调用
 	 */
 	void HealthUpdated(const FOnAttributeChangeData& ChangeData);
+	/**
+	 * @brief 蓝量更新的时候调用
+	 */
+	void ManaUpdated(const FOnAttributeChangeData& ChangeData);
 
+	
 	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level = 1);
 	// 全部的状态效果
 	UPROPERTY(EditAnywhere, Category="Gameplay Effects");

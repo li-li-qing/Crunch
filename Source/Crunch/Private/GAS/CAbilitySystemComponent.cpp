@@ -5,10 +5,12 @@
 #include "GAS/CAttributeSet.h"
 #include "GAS/CGameplayAbilityTypes.h"
 #include "GAS/CHeroAttributeSet.h"
+#include "GAS/CAbilitySystemStatics.h"
 UCAbilitySystemComponent::UCAbilitySystemComponent()
 {
 	// 绑定血量变更事件
 	GetGameplayAttributeValueChangeDelegate(UCAttributeSet::GetHealthAttribute()).AddUObject(this,&UCAbilitySystemComponent::HealthUpdated);
+	GetGameplayAttributeValueChangeDelegate(UCAttributeSet::GetManaAttribute()).AddUObject(this,&UCAbilitySystemComponent::ManaUpdated);
 
 	GenericConfirmInputID = (int32)ECAbilityInputID::Confirm;
 	GenericCancelInputID = (int32)ECAbilityInputID::Cancel;
@@ -133,12 +135,81 @@ const TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& UCAbilitySystemComp
 
 void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& ChangeData)
 {
-	if (!GetOwner()) return;
+	// 安全检查：确保有所有者且当前有网络权限（服务端执行）
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return; // 客户端或无权限时不执行逻辑
+	
+	// 检查生命值是否为满值状态
+	bool bFound = false;
 
-	// 检查死亡条件：血量<=0、服务端权限、死亡效果存在
-	if (ChangeData.NewValue <=0 && GetOwner()->HasAuthority() && DeathEffect)
+	// 获取最大生命值属性当前值
+	float MaxHealth = GetGameplayAttributeValue(UCAttributeSet::GetMaxHealthAttribute(), bFound);
+
+	// 如果成功获取到最大生命值且当前生命值大于等于最大值
+	if (bFound && ChangeData.NewValue >= MaxHealth)
 	{
-		AuthApplyGameplayEffect(DeathEffect);
+		// 检查是否已经拥有"生命值全满"标签
+		if (!HasMatchingGameplayTag(UCAbilitySystemStatics::GetHealthFullStatTag()))
+		{
+			// 添加"生命值全满"标签
+			AddLooseGameplayTag(UCAbilitySystemStatics::GetHealthFullStatTag());
+		}
+		
+	}
+	else
+	{
+		// // ► 生命值不满时移除"生命值全满"标签
+		RemoveLooseGameplayTag(UCAbilitySystemStatics::GetHealthFullStatTag());
+	}
+	// 检查生命值是否为0（死亡状态）
+	if (ChangeData.NewValue <= 0)
+	{
+		// 检查是否已经拥有"生命值为空"标签
+		if (!HasMatchingGameplayTag(UCAbilitySystemStatics::GetHealthEmptyStatTag()))
+		{
+			// 添加"生命值为空"标签（标记死亡状态）
+			AddLooseGameplayTag(UCAbilitySystemStatics::GetHealthEmptyStatTag());
+			// 应用死亡效果（如播放死亡动画、禁用输入等）
+			if (DeathEffect) AuthApplyGameplayEffect(DeathEffect);
+		}
+	}
+	else
+	{
+		// 生命值大于0时移除"生命值为空"标签
+		RemoveLooseGameplayTag(UCAbilitySystemStatics::GetHealthEmptyStatTag());
+	}
+
+}
+
+void UCAbilitySystemComponent::ManaUpdated(const FOnAttributeChangeData& ChangeData)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+
+	bool bFound = false;
+	float MaxMana = GetGameplayAttributeValue(UCAttributeSet::GetMaxManaAttribute(), bFound);
+	if (bFound && ChangeData.NewValue >= MaxMana)
+	{
+		if (!HasMatchingGameplayTag(UCAbilitySystemStatics::GetManaFullStatTag()))
+		{
+			AddLooseGameplayTag(UCAbilitySystemStatics::GetManaFullStatTag());
+		}
+		
+	}
+	else
+	{
+		RemoveLooseGameplayTag(UCAbilitySystemStatics::GetManaFullStatTag());
+	}
+
+	if (ChangeData.NewValue <= 0)
+	{
+		if (!HasMatchingGameplayTag(UCAbilitySystemStatics::GetManaEmptyStatTag()))
+		{
+			AddLooseGameplayTag(UCAbilitySystemStatics::GetManaEmptyStatTag());
+			
+		}
+	}
+	else
+	{
+		RemoveLooseGameplayTag(UCAbilitySystemStatics::GetManaEmptyStatTag());
 	}
 }
 
