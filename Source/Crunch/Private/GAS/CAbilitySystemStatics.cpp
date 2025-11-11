@@ -3,6 +3,10 @@
 
 #include "GAS/CAbilitySystemStatics.h"
 #include "Abilities/GameplayAbility.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemInterface.h"
+
 FGameplayTag UCAbilitySystemStatics::GetBasicAttackAbilityTag()
 {
 	return FGameplayTag::RequestGameplayTag("Ability.BasicAttack");
@@ -30,7 +34,7 @@ float UCAbilitySystemStatics::GetStaticCooldownDurationForAbility(const UGamepla
 
 	//  获取技能关联的冷却效果（GameplayEffect）
 	const UGameplayEffect* CooldownEffect = Ability->GetCooldownGameplayEffect();
-    
+
 	//  检查冷却效果是否存在
 	if (!CooldownEffect) return 0.0f;
 
@@ -39,7 +43,7 @@ float UCAbilitySystemStatics::GetStaticCooldownDurationForAbility(const UGamepla
 
 	//  从效果配置中提取静态冷却时长
 	CooldownEffect->DurationMagnitude.GetStaticMagnitudeIfPossible(1, CooldownDuration);
-    
+
 	//  返回提取的冷却时间
 	return CooldownDuration;
 }
@@ -60,7 +64,6 @@ float UCAbilitySystemStatics::GetStaticCostForAbility(const UGameplayAbility* Ab
 
 	// 返回提取的资源消耗
 	return FMath::Abs(Cost);
-	
 }
 
 FGameplayTag UCAbilitySystemStatics::GetAimStatTag()
@@ -91,4 +94,44 @@ FGameplayTag UCAbilitySystemStatics::GetManaFullStatTag()
 FGameplayTag UCAbilitySystemStatics::GetManaEmptyStatTag()
 {
 	return FGameplayTag::RequestGameplayTag("Stats.Mana.Empty");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetHeroRoleTag()
+{
+	return FGameplayTag::RequestGameplayTag("Role.Hero");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetExperienceAttributeTag()
+{
+	return FGameplayTag::RequestGameplayTag("Attribute.Experience");
+}
+
+FGameplayTag UCAbilitySystemStatics::GetGoldAttributeTag()
+{
+	return FGameplayTag::RequestGameplayTag("Attribute.Gold");
+}
+
+bool UCAbilitySystemStatics::IsHero(const AActor* ActorToCheck)
+{
+	// 将Actor转换为AbilitySystemInterface接口
+	// IAbilitySystemInterface是GAS系统的核心接口，用于获取AbilitySystemComponent
+	const IAbilitySystemInterface* ActorISA = Cast<IAbilitySystemInterface>(ActorToCheck);
+	// 检查Actor是否实现了IAbilitySystemInterface接口
+	if (ActorISA)
+	{
+		// 通过接口获取Actor的AbilitySystemComponent（GAS组件）
+		// AbilitySystemComponent是GAS系统的核心组件，负责管理技能、属性和效果
+		UAbilitySystemComponent* ActorASC = ActorISA->GetAbilitySystemComponent();
+		      
+		// 检查是否成功获取到AbilitySystemComponent
+		if (ActorASC)
+		{
+			// 检查Actor是否拥有"Role.Hero"的GameplayTag
+			// GetHeroRoleTag()返回标识英雄角色的标签（如"Role.Hero"）
+			// HasMatchingGameplayTag()检查组件是否包含指定的标签
+			return ActorASC->HasMatchingGameplayTag(GetHeroRoleTag());
+		}
+	}
+	// 如果Actor没有实现接口或没有GAS组件，返回false（不是英雄）
+	return false;
 }

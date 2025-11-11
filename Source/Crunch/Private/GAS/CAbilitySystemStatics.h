@@ -63,4 +63,18 @@ public:
 	static FGameplayTag GetManaFullStatTag();
 	static FGameplayTag GetManaEmptyStatTag();
 	
+	static FGameplayTag GetHeroRoleTag();
+	
+	static FGameplayTag GetExperienceAttributeTag();
+
+	static FGameplayTag GetGoldAttributeTag();
+
+
+	/**
+	 * @brief 检查一个Actor是否是英雄角色
+	 * @param ActorToCheck 
+	 * @return 
+	 */
+	static bool IsHero(const AActor* ActorToCheck);
+	
 };

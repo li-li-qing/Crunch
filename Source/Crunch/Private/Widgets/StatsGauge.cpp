@@ -36,6 +36,8 @@ void UStatsGauge::NativeConstruct()
 		float AttributeVal = OwnerASC->GetGameplayAttributeValue(Attribute, bFound);
 		// 设置初始显示值
 		SetValue(AttributeVal);
+
+		OwnerASC->GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this,&UStatsGauge::AttributeChanged);
 	}
 }
 

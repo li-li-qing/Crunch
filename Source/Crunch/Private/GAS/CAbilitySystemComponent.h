@@ -78,7 +78,9 @@ private:
 	// 存放所有基础的能力
 	UPROPERTY(EditAnywhere, Category="Gameplay Ability");
 	TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>> BasicAbilities;
-
+	// 存放所有被动的能力
+	UPROPERTY(EditAnywhere, Category="Gameplay Ability");
+	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
 	
 	UPROPERTY(EditAnywhere, Category="Base Stats");
 	UDataTable* BaseStatDataTable;
