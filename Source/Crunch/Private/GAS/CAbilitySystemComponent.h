@@ -8,6 +8,7 @@
 #include "GameplayEffectTypes.h"
 #include "CAbilitySystemComponent.generated.h"
 
+class UPA_AbilitySystemGenerics;
 /**
  *
  * 
@@ -62,15 +63,7 @@ private:
 
 	
 	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level = 1);
-	// 全部的状态效果
-	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
-	TSubclassOf<UGameplayEffect> FullStatEffect;
-	// 存放死亡的效果
-	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
-	TSubclassOf<UGameplayEffect> DeathEffect;
-	// 存放所有的Effect效果
-	UPROPERTY(EditAnywhere, Category="Gameplay Effects");
-	TArray<TSubclassOf<UGameplayEffect>> InitialEffect;
+
 
 	// 存放所有的技能
 	UPROPERTY(EditAnywhere, Category="Gameplay Ability");
@@ -78,12 +71,9 @@ private:
 	// 存放所有基础的能力
 	UPROPERTY(EditAnywhere, Category="Gameplay Ability");
 	TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>> BasicAbilities;
-	// 存放所有被动的能力
+
 	UPROPERTY(EditAnywhere, Category="Gameplay Ability");
-	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
-	
-	UPROPERTY(EditAnywhere, Category="Base Stats");
-	UDataTable* BaseStatDataTable;
+	TObjectPtr<UPA_AbilitySystemGenerics> AbilitySystemGenerics;
 	
 	
 };

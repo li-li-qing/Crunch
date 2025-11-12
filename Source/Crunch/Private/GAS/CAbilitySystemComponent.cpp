@@ -8,6 +8,7 @@
 #include "GAS/CAbilitySystemStatics.h"
 #include "GameplayEffectExtension.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GAS/PA_AbilitySystemGenerics.h"
 
 UCAbilitySystemComponent::UCAbilitySystemComponent()
 {
@@ -24,7 +25,8 @@ UCAbilitySystemComponent::UCAbilitySystemComponent()
 void UCAbilitySystemComponent::InitializeBaseAttributes()
 {
 	// 安全检查：确保数据表和所有者存在
-	if (!BaseStatDataTable || !GetOwner()) return;
+	if (!AbilitySystemGenerics || !AbilitySystemGenerics->GetBaseStatDataTable() || !GetOwner()) return;
+	const UDataTable* BaseStatDataTable = AbilitySystemGenerics->GetBaseStatDataTable();
 	// 声明基础属性指针，用于存储找到的匹配数据
 	const FHeroBaseStats* BaseStats = nullptr;
 
@@ -63,6 +65,33 @@ void UCAbilitySystemComponent::InitializeBaseAttributes()
 		SetNumericAttributeBase(UCHeroAttributeSet::GetIntelligenceGrowRateAttribute(),
 		                        BaseStats->IntelligenceGrowthRate);
 	}
+
+	// 从AbilitySystemGenerics获取经验值曲线数据
+	const FRealCurve* ExperienceCurve = AbilitySystemGenerics->GetExperienceCurve();
+
+	// 检查经验曲线是否有效
+	if (ExperienceCurve)
+	{
+		// 获取经验曲线的最大等级（通过键数量）
+		// GetNumKeys() 返回曲线中的关键点数量，通常对应最大等级
+		int MaxLevel = ExperienceCurve->GetNumKeys();
+    
+		// 设置角色的最大等级属性
+		// SetNumericAttributeBase() 将数值设置为属性的基础值（不受临时修饰器影响）
+		SetNumericAttributeBase(UCHeroAttributeSet::GetMaxLevelAttribute(), MaxLevel);
+
+		// 获取最大等级对应的经验值
+		// GetLastKeyHandle() 返回最后一个关键点的句柄（对应最高等级）
+		// GetKeyValue() 根据关键点句柄获取对应的经验值
+		float MaxExp = ExperienceCurve->GetKeyValue(ExperienceCurve->GetLastKeyHandle());
+    
+		// 设置角色的最大等级经验属性
+		SetNumericAttributeBase(UCHeroAttributeSet::GetMaxLevelExperienceAttribute(), MaxExp);
+
+		// 输出调试信息，显示最大等级和对应经验值
+		UE_LOG(LogTemp, Warning, TEXT("Max Level is : %d, Max experience is : %f"), MaxLevel, MaxExp);
+	}
+	
 }
 
 void UCAbilitySystemComponent::ServerSideInit()
@@ -76,8 +105,9 @@ void UCAbilitySystemComponent::ApplyInitialEffects()
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
+	if (!AbilitySystemGenerics) return;
 	// 遍历Effect数组中的所有数据
-	for (const TSubclassOf<UGameplayEffect>& EffectClass : InitialEffect)
+	for (const TSubclassOf<UGameplayEffect>& EffectClass : AbilitySystemGenerics->GetInitialEffects())
 	{
 		// 检查 EffectClass 是否有效，避免空指针崩溃
 		if (!EffectClass)
@@ -123,8 +153,9 @@ void UCAbilitySystemComponent::GiveInitialAbilities()
 		// InLevel等级为1,则为学习了这个技能
 		GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 0, (int32)AbilityPair.Key, nullptr));
 	}
+	if (!AbilitySystemGenerics) return;
 	// 遍历被动技能数组中的所有数据
-	for (const TSubclassOf<UGameplayAbility>& PassiveAbility : PassiveAbilities)
+	for (const TSubclassOf<UGameplayAbility>& PassiveAbility : AbilitySystemGenerics->GetPassiveAbilities())
 	{
 		// 为角色授予被动技能
 		GiveAbility(FGameplayAbilitySpec(PassiveAbility, 1, -1, nullptr));
@@ -134,7 +165,8 @@ void UCAbilitySystemComponent::GiveInitialAbilities()
 
 void UCAbilitySystemComponent::ApplyFullStatEffect()
 {
-	AuthApplyGameplayEffect(FullStatEffect);
+	if (!AbilitySystemGenerics) return;
+	AuthApplyGameplayEffect(AbilitySystemGenerics->GetFullStatEffect());
 }
 
 const TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& UCAbilitySystemComponent::GetAbilities() const
@@ -174,10 +206,11 @@ void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& Chang
 		// 检查是否已经拥有"生命值为空"标签
 		if (!HasMatchingGameplayTag(UCAbilitySystemStatics::GetHealthEmptyStatTag()))
 		{
+			if (!AbilitySystemGenerics) return;
 			// 添加"生命值为空"标签（标记死亡状态）
 			AddLooseGameplayTag(UCAbilitySystemStatics::GetHealthEmptyStatTag());
 			// 应用死亡效果（如播放死亡动画、禁用输入等）
-			if (DeathEffect) AuthApplyGameplayEffect(DeathEffect);
+			if (AbilitySystemGenerics->GetDeathEffect()) AuthApplyGameplayEffect(AbilitySystemGenerics->GetDeathEffect());
 
 			// 创建死亡事件数据结构
 			FGameplayEventData DeadAbilityEventData;

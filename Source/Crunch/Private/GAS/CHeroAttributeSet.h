@@ -26,7 +26,9 @@ public:
     ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, PrevLevelExperience)
     ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, NextLevelExperience)
     ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, Level)
+    ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, UpgradePoint)
     ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, MaxLevel)
+	ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, MaxLevelExperience)
     ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, Gold)
 	ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, IntelligenceGrowRate)
    ATTRIBUTE_ACCESSORS(UCHeroAttributeSet, StrengthGrowthRate)
@@ -63,10 +65,18 @@ private:
 	// 等级
 	UPROPERTY(ReplicatedUsing = OnRep_Level)
 	FGameplayAttributeData Level;
+
+	// 升级点
+	UPROPERTY(ReplicatedUsing = OnRep_UpgradePoint)
+	FGameplayAttributeData UpgradePoint;
 	
 	// 最大等级
 	UPROPERTY(ReplicatedUsing = OnRep_MaxLevel)
 	FGameplayAttributeData MaxLevel;
+
+	// 最大等级的经验
+	UPROPERTY(ReplicatedUsing = OnRep_MaxLevelExperience)
+	FGameplayAttributeData MaxLevelExperience;
 	
 	// 金币
 	UPROPERTY(ReplicatedUsing = OnRep_Gold)
@@ -91,7 +101,13 @@ private:
 	void OnRep_Level(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
+	void OnRep_UpgradePoint(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
 	void OnRep_MaxLevel(const FGameplayAttributeData& OldValue);
+	
+	UFUNCTION()
+	void OnRep_MaxLevelExperience(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	void OnRep_Gold(const FGameplayAttributeData& OldValue);
