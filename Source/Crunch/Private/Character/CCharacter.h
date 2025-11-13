@@ -52,11 +52,11 @@ public:
 	 * @brief 获得所有的能力
 	 * @return 返回键值对(技能输入ID - 技能)
 	 */
-	const TMap<ECAbilityInputID,TSubclassOf<class UGameplayAbility>>& GetAbilities() const;
-	
-	UFUNCTION(Server,Reliable,WithValidation)
-	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag,const FGameplayEventData& EventData);
-	
+	const TMap<ECAbilityInputID, TSubclassOf<class UGameplayAbility>>& GetAbilities() const;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+
 	/********************************************************/
 	/*						队伍ID  							*/
 	/********************************************************/
@@ -163,13 +163,15 @@ private:
 	 * @param NewCount 当前标签的堆叠数量
 	 */
 	void StunTagUpdated(const FGameplayTag Tag, int32 NewCount);
-	
+
 	/**
 	 * @brief 获取瞄准标签的回调函数
 	 * @param Tag 
 	 * @param NewCount 当前标签的堆叠数量
 	 */
 	void AimTagUpdated(const FGameplayTag Tag, int32 NewCount);
+
+	
 
 	/**
 	 * @brief 设置瞄准状态
@@ -188,6 +190,9 @@ private:
 	 * @param Data 
 	 */
 	void MoveSpeedUpdated(const FOnAttributeChangeData& Data);
+
+	void MaxHealthUpdated(const FOnAttributeChangeData& Data);
+	void MaxManaUpdated(const FOnAttributeChangeData& Data);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Death")
 	float DeathMontageFinishTimeShift = -0.8f;

@@ -40,6 +40,11 @@ public:
 	// 输入ID 与 技能对应表
 	const TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& GetAbilities() const;
 
+	/**
+	 * @brief 是否为满级
+	 * @return 
+	 */
+	bool IsAtMaxLevel() const;
 private:
 
 	/**
@@ -56,10 +61,16 @@ private:
 	 * @brief 血量更新的时候调用
 	 */
 	void HealthUpdated(const FOnAttributeChangeData& ChangeData);
+	
 	/**
 	 * @brief 蓝量更新的时候调用
 	 */
 	void ManaUpdated(const FOnAttributeChangeData& ChangeData);
+	
+	/**
+	 * @brief 经验值更新回调函数：当角色的经验值属性发生变化时调用
+	 */
+	void ExperienceUpdated(const FOnAttributeChangeData& ChangeData);
 
 	
 	void AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level = 1);

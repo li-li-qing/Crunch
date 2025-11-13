@@ -17,6 +17,8 @@ UCAbilitySystemComponent::UCAbilitySystemComponent()
 		this, &UCAbilitySystemComponent::HealthUpdated);
 	GetGameplayAttributeValueChangeDelegate(UCAttributeSet::GetManaAttribute()).AddUObject(
 		this, &UCAbilitySystemComponent::ManaUpdated);
+	GetGameplayAttributeValueChangeDelegate(UCHeroAttributeSet::GetExperienceAttribute()).AddUObject(
+		this, &UCAbilitySystemComponent::ExperienceUpdated);
 
 	GenericConfirmInputID = (int32)ECAbilityInputID::Confirm;
 	GenericCancelInputID = (int32)ECAbilityInputID::Cancel;
@@ -68,7 +70,6 @@ void UCAbilitySystemComponent::InitializeBaseAttributes()
 
 	// 从AbilitySystemGenerics获取经验值曲线数据
 	const FRealCurve* ExperienceCurve = AbilitySystemGenerics->GetExperienceCurve();
-
 	// 检查经验曲线是否有效
 	if (ExperienceCurve)
 	{
@@ -91,6 +92,8 @@ void UCAbilitySystemComponent::InitializeBaseAttributes()
 		// 输出调试信息，显示最大等级和对应经验值
 		UE_LOG(LogTemp, Warning, TEXT("Max Level is : %d, Max experience is : %f"), MaxLevel, MaxExp);
 	}
+	// 经验更新的时候调用
+	ExperienceUpdated(FOnAttributeChangeData());
 	
 }
 
@@ -172,6 +175,14 @@ void UCAbilitySystemComponent::ApplyFullStatEffect()
 const TMap<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& UCAbilitySystemComponent::GetAbilities() const
 {
 	return Abilities;
+}
+
+bool UCAbilitySystemComponent::IsAtMaxLevel() const
+{
+	bool bFound;
+	float CurrentLevel = GetGameplayAttributeValue(UCHeroAttributeSet::GetLevelAttribute(),bFound);
+	float MaxLevel = GetGameplayAttributeValue(UCHeroAttributeSet::GetMaxLevelAttribute(),bFound);
+	return CurrentLevel >= MaxLevel;
 }
 
 void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& ChangeData)
@@ -270,6 +281,66 @@ void UCAbilitySystemComponent::ManaUpdated(const FOnAttributeChangeData& ChangeD
 	{
 		RemoveLooseGameplayTag(UCAbilitySystemStatics::GetManaEmptyStatTag());
 	}
+}
+
+void UCAbilitySystemComponent::ExperienceUpdated(const FOnAttributeChangeData& ChangeData)
+{
+	// 安全检查：确保有所有者且当前有网络权限（服务端执行）
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	// 如果角色已达到最大等级，不再处理经验更新
+	if (IsAtMaxLevel()) return;
+	// 检查AbilitySystemGenerics是否有效
+	if (!AbilitySystemGenerics) return;
+	// 获取当前经验值（变化后的新值）
+	float CurrentExp = ChangeData.NewValue;
+	// 从AbilitySystemGenerics获取经验值曲线数据
+	const FRealCurve* ExperienceCurve = AbilitySystemGenerics->GetExperienceCurve();
+	if (!ExperienceCurve)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("can't find Experience data!"));
+		return;
+	}
+	// 初始化变量：
+	// PrevLevelExp - 当前等级所需经验
+	// NextLevelExp - 下一等级所需经验  
+	// NewLevel - 计算出的新等级
+	float PrevLevelExp = 0;
+	float NextLevelExp = 0;
+	float NewLevel = 1;
+
+	// 遍历经验值曲线的所有关键点（每个关键点对应一个等级）
+	for (auto Iter = ExperienceCurve->GetKeyHandleIterator();Iter; ++Iter)
+	{
+		// 获取达到当前等级所需经验值
+		float ExperienceToReachLevel = ExperienceCurve->GetKeyValue(*Iter);
+		// 如果当前经验值小于达到此等级所需经验，说明这是下一个等级
+		if (CurrentExp < ExperienceToReachLevel)
+		{
+			NextLevelExp = ExperienceToReachLevel;
+			break; // 找到目标等级，退出循环
+		}
+		// 更新上一等级的经验值和当前等级
+		PrevLevelExp = ExperienceToReachLevel;
+		NewLevel = Iter.GetIndex() + 1; // 索引从0开始，等级从1开始
+		
+	}
+	// 获取当前等级和升级点数
+	float CurrentLevel = GetNumericAttributeBase(UCHeroAttributeSet::GetLevelAttribute());
+	float CurrentUpgradePoint = GetNumericAttribute(UCHeroAttributeSet::GetUpgradePointAttribute());
+
+	// 计算升级的等级差和新的升级点数
+	float LevelUpgraded = NewLevel - CurrentLevel;
+	float NewUpgradePoint = CurrentUpgradePoint + LevelUpgraded;
+	// 更新角色属性：
+	// 设置新的等级
+	SetNumericAttributeBase(UCHeroAttributeSet::GetLevelAttribute(), NewLevel);
+	// 设置当前等级所需经验（用于进度条显示）
+	SetNumericAttributeBase(UCHeroAttributeSet::GetPrevLevelExperienceAttribute(), PrevLevelExp);
+	// 设置下一等级所需经验（用于进度条显示）
+	SetNumericAttributeBase(UCHeroAttributeSet::GetNextLevelExperienceAttribute(), NextLevelExp);
+	// 设置新的升级点数（每升一级获得1点）
+	SetNumericAttributeBase(UCHeroAttributeSet::GetUpgradePointAttribute(), NewUpgradePoint);
+	
 }
 
 void UCAbilitySystemComponent::AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level)

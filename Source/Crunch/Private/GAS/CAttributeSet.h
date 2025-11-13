@@ -27,8 +27,10 @@ class UCAttributeSet : public UAttributeSet
 public:
 	// 自动为Health生成4个函数
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, Health);
+	ATTRIBUTE_ACCESSORS(UCAttributeSet, CachedHealthPercent);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, MaxHealth);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, Mana);
+	ATTRIBUTE_ACCESSORS(UCAttributeSet, CachedManaPercent);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, MaxMana);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, AttackDamage);
 	ATTRIBUTE_ACCESSORS(UCAttributeSet, Armor);
@@ -46,6 +48,13 @@ public:
 	 * @param Data 
 	 */
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+
+	/**
+	 * @brief 重新缩放生命值函数：根据最大生命值变化调整当前生命值
+	 */
+	void RescaleHealth();
+	void RescaleMana();
+	
 private:
 	// 血量
 	UPROPERTY(ReplicatedUsing = OnRep_Health)
@@ -69,6 +78,14 @@ private:
 	// 移动速度
 	UPROPERTY(ReplicatedUsing = OnRep_MoveSpeed)
 	FGameplayAttributeData MoveSpeed;
+
+	// 缓存的血量百分比
+	UPROPERTY()
+	FGameplayAttributeData CachedHealthPercent;
+
+	// 缓存的蓝量百分比
+	UPROPERTY()
+	FGameplayAttributeData CachedManaPercent;
 
 	
 	UFUNCTION()

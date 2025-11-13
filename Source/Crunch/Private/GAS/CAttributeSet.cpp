@@ -30,6 +30,7 @@ void UCAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, flo
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,GetMaxHealth());
+		
 	}
 	if (Attribute == GetManaAttribute())
 	{
@@ -44,10 +45,50 @@ void UCAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCa
 	{
 		// 钳制Health值到[0, MaxHealth]范围内
 		SetHealth(FMath::Clamp(GetHealth(),0.f,GetMaxHealth()));
+		SetCachedHealthPercent(GetHealth() / GetMaxHealth());
 	}
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetMana(FMath::Clamp(GetMana(),0.f,GetMaxMana()));
+		SetCachedHealthPercent(GetMana() / GetMaxMana());
+	}
+}
+
+void UCAttributeSet::RescaleHealth()
+{
+	// 网络权限检查：确保只在服务端执行此操作
+	// GetOwningActor()->HasAuthority() 检查当前实例是否有网络权限
+	// 作用：防止客户端和服务端同时修改生命值导致不同步
+	if (!GetOwningActor()->HasAuthority())
+	{
+		return;
+	}
+
+	// 安全检查：确保有缓存的健康百分比和当前生命值不为0
+	// GetCachedHealthPercent() 获取之前缓存的健康百分比（0.0-1.0）
+	// GetHealth() 获取当前生命值
+	// 作用：避免在角色死亡或无效状态下进行缩放
+	if (GetCachedHealthPercent() != 0 && GetHealth() != 0)
+	{
+		// 重新计算并设置生命值
+		// 公式：新生命值 = 最大生命值 × 缓存的健康百分比
+		// 作用：保持生命值百分比不变，只根据新的最大生命值调整当前值
+		SetHealth(GetMaxHealth() * GetCachedHealthPercent());
+	}
+}
+
+void UCAttributeSet::RescaleMana()
+{
+	if (!GetOwningActor()->HasAuthority())
+	{
+		return;
+	}
+	if (GetCachedManaPercent() != 0 && GetMana() != 0)
+	{
+		// 重新计算并设置生命值
+		// 公式：新生命值 = 最大生命值 × 缓存的健康百分比
+		// 作用：保持生命值百分比不变，只根据新的最大生命值调整当前值
+		SetMana(GetMaxMana() * GetCachedManaPercent());
 	}
 }
 

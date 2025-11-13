@@ -54,7 +54,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_Experience)
 	FGameplayAttributeData Experience;
 	
-	// 上一级经验
+	// 当前所需的经验
 	UPROPERTY(ReplicatedUsing = OnRep_PrevLevelExperience)
 	FGameplayAttributeData PrevLevelExperience;
 	
