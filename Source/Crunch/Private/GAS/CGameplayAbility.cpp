@@ -9,11 +9,32 @@
 #include "CAbilitySystemComponent.h"
 #include "CAbilitySystemStatics.h"
 #include "GAS/GAP_Launch.h"
+#include "AbilitySystemComponent.h"
 
 UCGameplayAbility::UCGameplayAbility()
 {
 	// 对阻挡增加 眩晕 标签
 	ActivationBlockedTags.AddTag(UCAbilitySystemStatics::GetStunStatTag());
+}
+
+bool UCGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	// 通过AbilitySystemComponent查找对应的技能规格
+	// FindAbilitySpecFromHandle()：根据技能句柄查找技能规格信息
+	// AbilitySpec包含技能的等级、冷却、消耗等元数据
+	FGameplayAbilitySpec* AbilitySpec = ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle);
+	// 检查技能规格是否存在且等级是否有效
+	// 条件1：AbilitySpec != nullptr（技能规格存在）
+	// 条件2：AbilitySpec->Level <= 0（技能等级无效）
+	if (AbilitySpec && AbilitySpec->Level <= 0)
+	{
+		return false;
+	}
+	// 调用父类的CanActivateAbility进行基础检查
+	// 父类检查包括：冷却时间、资源消耗、标签要求等
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
 UAnimInstance* UCGameplayAbility::GetOwnerAnimInstance() const

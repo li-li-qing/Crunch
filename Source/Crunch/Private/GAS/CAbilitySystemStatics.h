@@ -6,7 +6,10 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CAbilitySystemStatics.generated.h"
+
 class UGameplayAbility;
+struct FGameplayAbilitySpec;
+class UAbilitySystemComponent;
 /**
  * 
  */
@@ -76,5 +79,20 @@ public:
 	 * @return 
 	 */
 	static bool IsHero(const AActor* ActorToCheck);
+
+	static bool IsAbilityAtMaxLevel(const FGameplayAbilitySpec& Spec);
+
+	/**
+	 * @brief // 检查技能消耗是否足够的静态辅助函数
+	 * @param AbilitySpec 
+	 * @param AbilitySystemComponent 
+	 * @return 
+	 */
+	static bool CheckAbilityCost(const FGameplayAbilitySpec& AbilitySpec,const UAbilitySystemComponent& AbilitySystemComponent);
+
+	static float GetManaCostFor(const UGameplayAbility* AbilityCDO,const UAbilitySystemComponent& ASC,int AbilityLevel);
 	
+	static float GetCooldownDurationFor(const UGameplayAbility* AbilityCDO,const UAbilitySystemComponent& ASC,int AbilityLevel);
+	
+	static float GetCooldownRemainingFor(const UGameplayAbility* AbilityCDO,const UAbilitySystemComponent& ASC,int AbilityLevel);
 };

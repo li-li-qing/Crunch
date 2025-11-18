@@ -10,6 +10,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GAS/PA_AbilitySystemGenerics.h"
 
+
 UCAbilitySystemComponent::UCAbilitySystemComponent()
 {
 	// 绑定血量变更事件
@@ -135,6 +136,8 @@ void UCAbilitySystemComponent::ApplyInitialEffects()
 	}
 }
 
+
+
 void UCAbilitySystemComponent::GiveInitialAbilities()
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
@@ -154,7 +157,7 @@ void UCAbilitySystemComponent::GiveInitialAbilities()
 	for (const TPair<ECAbilityInputID, TSubclassOf<UGameplayAbility>>& AbilityPair : BasicAbilities)
 	{
 		// InLevel等级为1,则为学习了这个技能
-		GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 0, (int32)AbilityPair.Key, nullptr));
+		GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 1, (int32)AbilityPair.Key, nullptr));
 	}
 	if (!AbilitySystemGenerics) return;
 	// 遍历被动技能数组中的所有数据
@@ -185,6 +188,64 @@ bool UCAbilitySystemComponent::IsAtMaxLevel() const
 	return CurrentLevel >= MaxLevel;
 }
 
+void UCAbilitySystemComponent::Server_UpgradeAbilityWithId_Implementation(ECAbilityInputID InputID)
+{
+	// 获取当前升级点数
+	// GetGameplayAttributeValue()：从AttributeSet获取属性当前值
+	// bFound：输出参数，指示是否成功找到属性
+	bool bFound = false;
+	float UpgradePoint = GetGameplayAttributeValue(UCHeroAttributeSet::GetUpgradePointAttribute(), bFound);
+    
+	// 检查升级点数是否有效
+	// 条件1：属性存在（bFound=true）
+	// 条件2：升级点数大于0
+	if (!bFound || UpgradePoint <= 0) 
+		return; // 没有升级点数，直接返回
+
+	// 根据输入ID查找对应的技能规格
+	// FindAbilitySpecFromInputID()：通过输入ID查找技能规格
+	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromInputID((int32)InputID);
+    
+	// 检查技能是否有效且未达到最大等级
+	// UCAbilitySystemStatics::IsAbilityAtMaxLevel()：检查技能是否已满级
+	if (!AbilitySpec || UCAbilitySystemStatics::IsAbilityAtMaxLevel(*AbilitySpec)) 
+		return;
+
+	// 扣除升级点数
+	// SetNumericAttributeBase()：设置属性的基础值（永久性修改）
+	SetNumericAttributeBase(UCHeroAttributeSet::GetUpgradePointAttribute(), UpgradePoint - 1);
+
+	// 提升技能等级
+	AbilitySpec->Level += 1;
+
+	// 标记技能规格为脏数据，需要同步到客户端
+	// MarkAbilitySpecDirty()：标记技能数据已修改，触发网络复制
+	MarkAbilitySpecDirty(*AbilitySpec);
+
+	Client_AbilitySpecLevelUpdated(AbilitySpec->Handle,AbilitySpec->Level);
+}
+
+bool UCAbilitySystemComponent::Server_UpgradeAbilityWithId_Validate(ECAbilityInputID InputID)
+{
+	return true;
+}
+void UCAbilitySystemComponent::Client_AbilitySpecLevelUpdated_Implementation(FGameplayAbilitySpecHandle Handle,
+	int NewLevel)
+{
+	// 根据句柄查找本地客户端的技能规格
+	// FindAbilitySpecFromHandle()：通过句柄查找技能规格
+	FGameplayAbilitySpec* Spec = FindAbilitySpecFromHandle(Handle);
+    
+	if (Spec)
+	{
+		// 更新客户端本地的技能等级
+		Spec->Level = NewLevel;
+        
+		// 触发技能规格变更回调
+		// AbilitySpecDirtiedCallbacks：多播委托，通知所有监听者技能数据已更新
+		AbilitySpecDirtiedCallbacks.Broadcast(*Spec);
+	}
+}
 void UCAbilitySystemComponent::HealthUpdated(const FOnAttributeChangeData& ChangeData)
 {
 	// 安全检查：确保有所有者且当前有网络权限（服务端执行）

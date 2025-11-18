@@ -26,7 +26,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	// 使用pawn的控制器旋转
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->ProbeChannel = ECC_SpringArm;
-	
+
 	// 初始化摄像机
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	// 将摄像机附加到弹簧臂上
@@ -82,6 +82,14 @@ void ACPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this,
 		                                   &ACPlayerCharacter::HandleMoveInput);
 
+		// 绑定升级技能输入
+		EnhancedInputComponent->BindAction(LearnAbilityLeaderAction, ETriggerEvent::Started, this,
+		                                   &ACPlayerCharacter::LearnAbilityLeaderDown);
+		// 绑定升级技能输入
+		EnhancedInputComponent->BindAction(LearnAbilityLeaderAction, ETriggerEvent::Completed, this,
+		                                   &ACPlayerCharacter::LearnAbilityLeaderUp);
+
+
 		for (const TPair<ECAbilityInputID, UInputAction*>& InputActionPair : GameplayAbilityInputActions)
 		{
 			EnhancedInputComponent->BindAction(InputActionPair.Value, ETriggerEvent::Triggered, this,
@@ -115,6 +123,13 @@ void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionV
 {
 	// 获取输入状态（按下=true，释放=false）
 	bool bPressed = InputActionValue.Get<bool>();
+
+	if (bPressed && bIsLearnAbilityLeaderDown)
+	{
+		UpgradeAbilityWithInputID(InputID);
+		return;
+	}
+	
 	// 如果输入是按下状态
 	if (bPressed)
 	{
@@ -151,6 +166,16 @@ void ACPlayerCharacter::HandleMoveInput(const FInputActionValue& InputActionValu
 
 	// 移动
 	AddMovementInput(GetMoveForwardDirection() * InputVal.Y + GetLookRightDirection() * InputVal.X);
+}
+
+void ACPlayerCharacter::LearnAbilityLeaderDown(const FInputActionValue& InputActionValue)
+{
+	bIsLearnAbilityLeaderDown = true;
+}
+
+void ACPlayerCharacter::LearnAbilityLeaderUp(const FInputActionValue& InputActionValue)
+{
+	bIsLearnAbilityLeaderDown = false;
 }
 
 FVector ACPlayerCharacter::GetLookRightDirection() const

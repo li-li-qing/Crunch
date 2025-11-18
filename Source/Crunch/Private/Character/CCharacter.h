@@ -57,6 +57,12 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
 
+protected:
+	/**
+	 * @brief 通过输入 ID 升级能力
+	 * @param InputId 
+	 */
+	void UpgradeAbilityWithInputID(ECAbilityInputID InputId);
 	/********************************************************/
 	/*						队伍ID  							*/
 	/********************************************************/

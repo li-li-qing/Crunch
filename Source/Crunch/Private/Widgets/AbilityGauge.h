@@ -5,10 +5,15 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/IUserObjectListEntry.h"
+#include "GameplayEffectTypes.h"
 #include "AbilityGauge.generated.h"
 
+struct FOnAttributeChangeData;
+class UAbilitySystemComponent;
 class UImage;
 class UTextBlock;
+struct FGameplayAbilitySpec;
+
 
 // DataTable行数据结构：定义技能UI表现
 USTRUCT(BlueprintType)
@@ -41,7 +46,7 @@ class UAbilityGauge : public UUserWidget,public IUserObjectListEntry
 
 public:
 	/**
-	 * @brief 列表项核心回调：数据绑定时触发
+	 * @brief ListView条目初始化函数：当列表项设置数据对象时调用
 	 * @param ListItemObject 
 	 */
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
@@ -62,10 +67,26 @@ private:
 	// 冷却时间的图片(转表的那个值)
 	UPROPERTY(EditDefaultsOnly,Category="Visual")
 	FName CooldownPercentParamName = "Percent";
+
+	// 技能的等级
+	UPROPERTY(EditDefaultsOnly,Category="Visual")
+	FName AbilityLevelParamName = "Level";
+
+	// 是否激活了技能
+	UPROPERTY(EditDefaultsOnly,Category="Visual")
+	FName CanCastAbilityParamName = "CanCast";
+
+	// 技能的加点情况
+	UPROPERTY(EditDefaultsOnly,Category="Visual")
+	FName UpgradePointAvailableParamName = "UpgradeAvaliable";
 	
 	// 技能的图标
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Icon;
+	
+	// 技能等级的图标
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> LevelGauge;
 	
 	// 冷却剩余持续时间
 	UPROPERTY(meta = (BindWidget))
@@ -102,4 +123,36 @@ private:
 	void CooldownFinished();
 	// 冷却时间更新函数，周期性调用以更新剩余时间显示
 	void UpdateCooldown();
+
+	const UAbilitySystemComponent* OwnerAbilitySystemComponent;
+	const FGameplayAbilitySpec* CachedAbilitySpec;
+
+	/**
+	 * @brief 获取技能规格信息：缓存并返回技能规格数据
+	 * @return 
+	 */
+	const FGameplayAbilitySpec* GetAbilitySpec();
+
+	bool bIsAbilityLearned = false;
+
+	/**
+	 * @brief 当能力规格更新的时候调用
+	 * @param AbilitySpec 
+	 */
+	void AbilitySpecUpdated(const FGameplayAbilitySpec& AbilitySpec);
+
+	/**
+	 * @brief 更新技能为可用状态
+	 */
+	void UpdateCanCast();
+
+	
+	void UpgradePointUpdated(const FOnAttributeChangeData& Data);
+
+	void ManaUpdated(const FOnAttributeChangeData& Data);
+
+	
+	
 };
+
+

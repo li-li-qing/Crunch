@@ -45,6 +45,21 @@ public:
 	 * @return 
 	 */
 	bool IsAtMaxLevel() const;
+
+	/**
+	 * @brief 服务端：升级指定输入ID对应的技能
+	 * @param InputID 
+	 */
+	UFUNCTION(Server, Reliable,WithValidation)
+	void Server_UpgradeAbilityWithId(ECAbilityInputID InputID);
+
+	/**
+	 * @brief 客户端：接收技能等级更新通知
+	 * @param Handle 
+	 * @param NewLevel 
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_AbilitySpecLevelUpdated(FGameplayAbilitySpecHandle Handle,int NewLevel);
 private:
 
 	/**

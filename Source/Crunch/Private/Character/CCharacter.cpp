@@ -93,6 +93,14 @@ bool ACCharacter::Server_SendGameplayEventToSelf_Validate(const FGameplayTag& Ev
 	return true;
 }
 
+void ACCharacter::UpgradeAbilityWithInputID(ECAbilityInputID InputId)
+{
+	if (CAbilitySystemComponent)
+	{
+		CAbilitySystemComponent->Server_UpgradeAbilityWithId(InputId);
+	}
+}
+
 void ACCharacter::SetGenericTeamId(const FGenericTeamId& NewTeamID)
 {
 	TeamId = NewTeamID;

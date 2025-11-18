@@ -48,15 +48,23 @@ private:
 	// 增强输入映射上下文
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> IM_GameplayInputMappingContext;
+	
 	// 增加 跳跃 的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Jump;
+	
 	// 增加 移动视角 的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Look;
+	
 	// 增加 移动 的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Move;
+
+	// 增加 升级技能 的输入行为
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> LearnAbilityLeaderAction;
+	
 	// 能力的输入行为
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TMap<ECAbilityInputID,TObjectPtr<UInputAction>> GameplayAbilityInputActions;
@@ -75,9 +83,14 @@ private:
 	
 	// 移动视角
 	void HandleLookInput(const FInputActionValue& InputActionValue);
+	
 	// 移动
 	void HandleMoveInput(const FInputActionValue& InputActionValue);
-
+	
+	// 学习技能的回调绑定
+	void LearnAbilityLeaderDown(const FInputActionValue& InputActionValue);
+	void LearnAbilityLeaderUp(const FInputActionValue& InputActionValue);
+	bool bIsLearnAbilityLeaderDown = false;
 	// 获得摄像机看向的方向 、 右边的方向、要移动的方向
 	FVector GetLookRightDirection()const;
 	FVector GetLookForwardDirection()const;
