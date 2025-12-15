@@ -217,12 +217,14 @@ void ACPlayerCharacter::OnRecoverFromStun()
 
 void ACPlayerCharacter::OnAimStateChanged(bool bIsAimming)
 {
-	// 清除现有的插值定时器（防止多个动画同时进行）
-	GetWorldTimerManager().ClearTimer(CameraLerpTimerHandle);
-	// 根据瞄准状态选择目标位置：
-	// 瞄准状态：使用CameraAimLocalOffset（相机瞄准位置偏移）
-	// 普通状态：使用原点(0,0,0)（默认相机位置）
-	LerpCameraToLocalOffsetLocation(bIsAimming ? CameraAimLocalOffset : FVector{0.f});
+	if (IsLocallyControlledByPlayer())
+	{
+		// 根据瞄准状态选择目标位置：
+		// 瞄准状态：使用CameraAimLocalOffset（相机瞄准位置偏移）
+		// 普通状态：使用原点(0,0,0)（默认相机位置）
+		LerpCameraToLocalOffsetLocation(bIsAimming ? CameraAimLocalOffset : FVector{0.f});
+	}
+	
 }
 
 void ACPlayerCharacter::LerpCameraToLocalOffsetLocation(const FVector& Goal)
@@ -232,7 +234,7 @@ void ACPlayerCharacter::LerpCameraToLocalOffsetLocation(const FVector& Goal)
 
 	// 在下一帧立即开始插值动画
 	// SetTimerForNextTick：下一帧执行，创建平滑的逐帧动画
-	GetWorldTimerManager().SetTimerForNextTick(
+	CameraLerpTimerHandle =  GetWorldTimerManager().SetTimerForNextTick(
 		FTimerDelegate::CreateUObject(
 			this, // 调用对象
 			&ACPlayerCharacter::TickCameraLocalOffsetLerp, // 回调函数
@@ -267,7 +269,7 @@ void ACPlayerCharacter::TickCameraLocalOffsetLerp(FVector Goal)
 	CameraComp->SetRelativeLocation(NewLocalOffset);
 
 	//  设置下一帧继续插值（创建动画循环）
-	GetWorldTimerManager().SetTimerForNextTick(
+	CameraLerpTimerHandle = GetWorldTimerManager().SetTimerForNextTick(
 		FTimerDelegate::CreateUObject(
 			this,
 			&ACPlayerCharacter::TickCameraLocalOffsetLerp,
