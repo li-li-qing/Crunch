@@ -125,17 +125,23 @@ void UGA_Combo::HandleInputPress(float TimeWaited)
 
 void UGA_Combo::DoDamage(FGameplayEventData Data)
 {
-
-	// 从TargetData中获取球体扫描的命中结果
-	TArray<FHitResult> HitResults = GetHitResultFromSweepLocationTargetData(
-		Data.TargetData, TargetSweepSphereRadius);
-	
-	// 遍历所有命中的目标
-	for (const FHitResult& HitResult : HitResults)
+	// 获取目标数据中命中的数量
+	int HitResultCount = UAbilitySystemBlueprintLibrary::GetDataCountFromTargetData(Data.TargetData);
+    
+	// 遍历所有命中结果
+	for (int i = 0; i < HitResultCount; i++)
 	{
-		// 获取当前连招段对应的GameplayEffect
+		// 从目标数据中获取第i个命中结果
+		FHitResult HitResult = UAbilitySystemBlueprintLibrary::GetHitResultFromTargetData(Data.TargetData, i);
+        
+		// 根据当前连击获取对应的伤害GameplayEffect
 		TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
-		ApplyGameplayEffectToHitResultActor(HitResult,GameplayEffect,GetAbilityLevel(CurrentSpecHandle,CurrentActorInfo));
+        
+		// 获取当前能力的等级
+		float AbilityLevel = GetAbilityLevel(CurrentSpecHandle, CurrentActorInfo);
+        
+		// 对命中的Actor应用伤害效果
+		ApplyGameplayEffectToHitResultActor(HitResult, GameplayEffect, AbilityLevel);
 	}
 	
 }

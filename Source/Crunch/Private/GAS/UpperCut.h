@@ -34,9 +34,7 @@ private:
 	// 击飞的速度
 	UPROPERTY(EditDefaultsOnly, Category = "Launch")
 	float UpperComboHoldSpeed = 100.f;
-	// 伤害检测的范围大小
-	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
-	float TargetSweepSphereRadius = 80.f;
+
 	// 上勾拳的蒙太奇动画
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TObjectPtr<UAnimMontage> UpperCutMontage;

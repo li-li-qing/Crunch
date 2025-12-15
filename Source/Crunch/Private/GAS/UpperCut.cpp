@@ -2,6 +2,8 @@
 
 
 #include "GAS/UpperCut.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GAS/GA_Combo.h"
@@ -72,14 +74,18 @@ FGameplayTag UUpperCut::GetUpperCutLaunchTag()
 
 void UUpperCut::StartLaunching(FGameplayEventData EventData)
 {
-	TArray<FHitResult> TargetHitResults = GetHitResultFromSweepLocationTargetData(
-		EventData.TargetData, TargetSweepSphereRadius, ETeamAttitude::Hostile, ShouldDrawDebug());
+	
 	if (K2_HasAuthority())
-	{
+	{ 
 		// 击飞自己
 		PushTarget(GetAvatarActorFromActorInfo(), FVector::UpVector * UpperCutLaunchSpeed);
-		for (FHitResult HitResult : TargetHitResults)
+		// 获取目标数据中命中的数量
+		int HitResultCount = UAbilitySystemBlueprintLibrary::GetDataCountFromTargetData(EventData.TargetData);
+		// 遍历所有命中结果
+		for (int i = 0; i < HitResultCount; i++)
 		{
+			// 从目标数据中获取第i个命中结果
+			FHitResult HitResult = UAbilitySystemBlueprintLibrary::GetHitResultFromTargetData(EventData.TargetData, i);
 			// 击飞每个命中的敌人
 			PushTarget(HitResult.GetActor(), FVector::UpVector * UpperCutLaunchSpeed);
 			ApplyGameplayEffectToHitResultActor(HitResult, LaunchDamageEffect,
@@ -107,13 +113,17 @@ void UUpperCut::HandleComboDamageEvent(FGameplayEventData EventData)
 	// 上勾拳连击的伤害
 	if (K2_HasAuthority())
 	{
-		TArray<FHitResult> TargetHitResults = GetHitResultFromSweepLocationTargetData(
-			EventData.TargetData, TargetSweepSphereRadius, ETeamAttitude::Hostile, ShouldDrawDebug());
+	
 		PushTarget(GetAvatarActorFromActorInfo(), FVector::UpVector * UpperComboHoldSpeed);
 		const FGenericDamageEffectDef* EffectDef = GetDamageEffectDerForCurrentCombo();
 		if (!EffectDef) return;
-		for (FHitResult& HitResult : TargetHitResults)
+		// 获取目标数据中命中的数量
+		int HitResultCount = UAbilitySystemBlueprintLibrary::GetDataCountFromTargetData(EventData.TargetData);
+		// 遍历所有命中结果
+		for (int i = 0; i < HitResultCount; i++)
 		{
+			// 从目标数据中获取第i个命中结果
+			FHitResult HitResult = UAbilitySystemBlueprintLibrary::GetHitResultFromTargetData(EventData.TargetData, i);
 			FVector PushVel = GetAvatarActorFromActorInfo()->GetActorTransform().TransformVector(EffectDef->PushVelocity);
 			PushTarget(HitResult.GetActor(), PushVel);
 			ApplyGameplayEffectToHitResultActor(HitResult, EffectDef->DamageEffect,
