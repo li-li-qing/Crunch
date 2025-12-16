@@ -8,6 +8,7 @@
 #include "GameplayWidget.generated.h"
 
 
+class UShopWidget;
 class UAbilitySystemComponent;
 class UValueGauge;
 class UAbilityListView;
@@ -24,7 +25,11 @@ public:
 
 	// 配置技能
 	void ConfigureAbilities(const TMap<ECAbilityInputID,TSubclassOf<class UGameplayAbility>>& Abilities);
-	
+
+	/**
+	 * @brief 切换背包
+	 */
+	void ToggleShop();
 private:
 	// 血条
 	UPROPERTY(meta = (BindWidget))
@@ -56,6 +61,41 @@ private:
 	// 力量
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UStatsGauge> StrengthGauge;
+
+	// 商店
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UShopWidget> ShopWidget;
+
+	// 商店的过渡动画
+	UPROPERTY(Transient,meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> ShopPopupAnimation;
+
+	/**
+	 * @brief 播放背包的动画
+	 * @param bPlayForward true:正序播放 false:逆序播放 
+	 */
+	void PlayShopPopupAnimation(bool bPlayForward);
+
+	/**
+	 * @brief 设置当前Widget拥有者的输入状态
+	 * @param bPawnInputEnabled 
+	 */
+	void SetOwningPawnInputEnabled(bool bPawnInputEnabled);
+
+	/**
+	 * @brief 显示鼠标的显示
+	 * @param bShowMouseCursor true:显示鼠标 false:隐藏鼠标
+	 */
+	void SetShowMouseCursor(bool bShowMouseCursor);
+
+	/**
+	 * @brief 设置游戏模式为GameAndUI
+	 */
+	void SetFocusToGameAndUI();
+	/**
+	 * @brief 设置游戏模式为GameOnly
+	 */
+	void SetFocusToGameOnly();
 	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;

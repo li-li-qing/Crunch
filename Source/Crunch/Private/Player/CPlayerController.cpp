@@ -4,6 +4,8 @@
 #include "Player/CPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "CPlayerCharacter.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "Widgets/GameplayWidget.h"
 void ACPlayerController::OnPossess(APawn* InPawn)
 {
@@ -35,6 +37,27 @@ void ACPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	DOREPLIFETIME(ACPlayerController,TeamId);
 }
 
+void ACPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	// 获得增强输入子系统
+	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = GetLocalPlayer()->GetSubsystem<
+		UEnhancedInputLocalPlayerSubsystem>();
+	if (InputSubsystem)
+	{
+		// 移除映射上下文
+		InputSubsystem->RemoveMappingContext(UIInputMapping);
+		// 添加映射上下文，优先级为0
+		InputSubsystem->AddMappingContext(UIInputMapping, 1);
+	}
+	UEnhancedInputComponent* EnhancedInputComp = Cast<UEnhancedInputComponent>(InputComponent);
+	if (EnhancedInputComp)
+	{
+		EnhancedInputComp->BindAction(ShopToggleInputAction,ETriggerEvent::Triggered,this,&ACPlayerController::ToggleShop);
+	}
+}
+
 void ACPlayerController::SetGenericTeamId(const FGenericTeamId& NewTeamID)
 {
 	
@@ -59,4 +82,9 @@ void ACPlayerController::SpawnGameplayWidget()
 		// 把拥有的技能传给UI
 		GameplayWidget->ConfigureAbilities(CPlayerCharacter->GetAbilities());
 	}
+}
+
+void ACPlayerController::ToggleShop()
+{
+	GameplayWidget->ToggleShop();
 }

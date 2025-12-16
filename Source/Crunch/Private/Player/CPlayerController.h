@@ -7,6 +7,8 @@
 #include "GenericTeamAgentInterface.h"
 #include "CPlayerController.generated.h"
 
+class UInputAction;
+class UInputMappingContext;
 class UGameplayWidget;
 class ACPlayerCharacter;
 /**
@@ -22,6 +24,8 @@ public:
 
 	virtual void AcknowledgePossession(APawn* InPawn) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void SetupInputComponent() override;
 	/********************************************************/
 	/*						队伍ID  							*/
 	/********************************************************/
@@ -34,7 +38,6 @@ public:
 private:
 	UPROPERTY(Replicated)
 	FGenericTeamId TeamId;
-private:
 	/**
 	 * @brief 生成gameplay的UI界面
 	 */
@@ -48,4 +51,20 @@ private:
 	// 在代码中使用的GameplayWidget
 	UPROPERTY()
 	TObjectPtr<UGameplayWidget> GameplayWidget;
+
+	// 输入上下文
+	UPROPERTY(EditDefaultsOnly,Category = "Input")
+	TObjectPtr<UInputMappingContext> UIInputMapping;
+
+	// 切换背包的输入IA
+	UPROPERTY(EditDefaultsOnly,Category = "Input")
+	TObjectPtr<UInputAction> ShopToggleInputAction;
+
+	/**
+	 * @brief 切换背包
+	 */
+	UFUNCTION()
+	void ToggleShop();
+	
+	
 };
