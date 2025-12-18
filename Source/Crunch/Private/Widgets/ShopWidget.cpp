@@ -4,6 +4,7 @@
 #include "Components/TileView.h"
 #include "Widgets/ShopItemWidget.h"
 #include "Framework/CAssetManager.h"
+#include "Inventory/InventoryComponent.h"
 
 /**
  * @brief 初始化商店UI
@@ -20,6 +21,11 @@ void UShopWidget::NativeConstruct()
 	
 	// 绑定UI组件生成事件
 	ShopItemList->OnEntryWidgetGenerated().AddUObject(this, &UShopWidget::ShopItemWidgetGenerated);
+
+	if (APawn* OwnerPawn = GetOwningPlayerPawn())
+	{
+		OwnerInventoryComponent = OwnerPawn->GetComponentByClass<UInventoryComponent>();
+	}
 }
 
 /**
@@ -60,6 +66,11 @@ void UShopWidget::ShopItemWidgetGenerated(UUserWidget& NewWidget)
 	UShopItemWidget* ItemWidget = Cast<UShopItemWidget>(&NewWidget);
 	if (ItemWidget)
 	{
+		if (OwnerInventoryComponent)
+		{
+			ItemWidget->OnItemPurchaseIssued.AddUObject(OwnerInventoryComponent,&UInventoryComponent::TryPurchase);
+			
+		}
 		// 建立商店物品与对应UI组件的映射关系
 		ItemsMap.Add(ItemWidget->GetShopItem(), ItemWidget);
 	}

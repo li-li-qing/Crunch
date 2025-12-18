@@ -157,6 +157,8 @@ private:
 	void TickCameraLocalOffsetLerp(FVector Goal);
 
 
+	UPROPERTY(EditDefaultsOnly)
+	class UInventoryComponent* InventoryComponent;
 	
 	
 };
